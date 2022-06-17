@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/gettext
+gettext.so
+gettext.dylib
+gettext.dll
+gettext.a
+gettext.lib
+gettext-test-*
+*.exe
+*.o
+*.obj
+*.lst
+/.vs

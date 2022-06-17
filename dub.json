@@ -1,0 +1,19 @@
+{
+    "name": "gettext",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "description": "Internationalization compatible with the GNU gettext utilities.",
+    "license": "BSL-1.0",
+    "targetType": "sourceLibrary",
+    "configurations": [
+        {
+            "name": "default"
+        },
+        {
+            "name": "xgettext",
+            "versions": [ "xgettext" ]
+        }
+    ]
+}

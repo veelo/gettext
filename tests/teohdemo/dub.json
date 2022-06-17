@@ -1,0 +1,28 @@
+{
+    "name": "teohdemo",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "description": "Replica of H.S. Teoh's proof of concept from https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com",
+    "license": "BSL-01",
+    "targetType": "executable",
+    "dependencies": {
+        "gettext": {
+            "path": "../../",
+            "version": "*"
+        }
+    },
+    "configurations": [
+        {
+            "name": "default"
+        },
+        {
+            "name": "xgettext",
+            "versions": [ "xgettext" ],
+            "subConfigurations": {
+                "gettext": "xgettext"
+            }
+        }
+    ]
+}
