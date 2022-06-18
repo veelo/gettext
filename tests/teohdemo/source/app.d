@@ -7,6 +7,6 @@ void main()
     foreach (i, name; ["Joe", "Schmoe", "Jane", "Doe"])
     {
         fun1(name);
-        fun2(5 + i.to!int * 10);
+        fun2(1 + i.to!int * 2);
     }
 }

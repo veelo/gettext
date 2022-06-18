@@ -1,13 +1,14 @@
 # Gettext
 
-This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction, enabled by D's unique language features, with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to choose their preferred language. Many commercial translation offices support GNU `gettext` PO files (Portable Object), and various editors exist that help with the translation process. The translation process is completely separated from the programming process, so that they may happen asynchronously and without knowledge of eachother.
+This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction, enabled by D's unique language features, with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to switch between natural languages within the same distribution. Many commercial translation offices support GNU `gettext` PO files (Portable Object), and various editors exist that help with the translation process. The translation process is completely separated from the programming process, so that they may happen asynchronously and without knowledge of eachother.
 
 ## Features
 
 - Multiple identical strings are translated once.
-- Extracts all marked strings that are seen by the compiler.
-- Maintains references to the source location of the original string.
-- Supports plural forms.
+- All marked strings that are seen by the compiler are extracted automatically.
+- References to the source location of the original strings are maintained.
+- Plural forms are supported and language-dependent.
+- There are no compile-time, link-time or run-time dependencies on GNU `gettext`. Translators will need the GNU `gettext` utilities, or any of the more user friendly PO editor alternatives.
 
 ## Installation
 
@@ -81,7 +82,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-17T21:58:39.6482118Z\n"
+"POT-Creation-Date: 2022-06-18T13:41:36.9820364Z\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -90,9 +91,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: source/mod1.d:8(fun1)
+#: source/mod1.d:11(fun1)
 ", c-format
 msgid "Hello! My name is %s."
+msgstr ""
+
+#: source/mod1.d:12(fun1) source/mod2.d:15(fun3)
+msgid "Identical strings share their translation!"
 msgstr ""
 
 #: source/mod2.d:13(fun3)
@@ -105,27 +110,15 @@ msgid "I'm counting one apple."
 msgid_plural "I'm counting %d apples."
 msgstr[0] ""
 msgstr[1] ""
-
-#: source/mod1.d:11 source/mod2.d:15(fun3)
-msgid "Identical strings share their translation!"
-msgstr ""
 ```
 
-## Preparing PO files
+## Adding translations
 
-Each natural language that is going to be supported requires a `.po` file, which is derived from the previously generated `.pot` template file. This can be done with the `msginit` utility distributed as part of the GNU `gettext` utilities, third party editors like [Poedit](https://poedit.net/), or by hand.
+Each natural language that is going to be supported requires a `.po` file, which is derived from the previously generated `.pot` template file. This `.po` file is then edited to fill in the stubs with the correct translations. Lastly the `.po` is converted to binary `.mo` file (Machine Object) which is used for string lookup at run-time. Whenever the source code changes, the translations may need to be updated, which is done by comparing the old `.po` file with the new `.pot` file.
 
-The `msginit` invocation is simple, for details please refer to the [`msginit` documentation](https://www.gnu.org/software/gettext/manual/html_node/msginit-Invocation.html).
-```shell
-cd po
-msginit
-```
-Without options this creates the `en_GB.po` file for the British English language, in which all strings are copied verbatim (assuming the source strings are in English).
+There are various tools to do this, from dedicated stand-alone editors, editor plugins or modes, web applications to command line utilities.
 
-Use the `--locale` option for each new language that is to be supported, for example:
-```shell
-msginit --locale=ru_RU.UTF-8
-```
+Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. It supports marking translations that need work and adding notes to translations. It saves the new `.po` file as well as the `.mo` file ready for distribution.
 
 # Credits
 

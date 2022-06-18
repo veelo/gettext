@@ -1,0 +1,39 @@
+# PO Template for teohdemo.
+# Copyright © 2022, SARC B.V.
+# This file is distributed under the BSL-01 license.
+# Bastiaan Veelo, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-06-18T13:41:36.9820364Z\n"
+"PO-Revision-Date: 2022-06-18 17:23+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: ru_RU\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: source/mod1.d:11(fun1)
+msgid "Hello! My name is %s."
+msgstr "Привет! Меня зовут %s."
+
+#: source/mod1.d:12(fun1) source/mod2.d:15(fun3)
+msgid "Identical strings share their translation!"
+msgstr "Одинаковые строки имеют общий перевод!"
+
+#: source/mod2.d:13(fun3)
+msgid "Never used, but nevertheless translated!"
+msgstr "Никогда не использовался, но тем не менее переведен!"
+
+#: source/mod2.d:8(fun2)
+msgid "I'm counting one apple."
+msgid_plural "I'm counting %d apples."
+msgstr[0] "Я считаю %d яблоко."
+msgstr[1] "Я считаю %d яблока."
+msgstr[2] "Я считаю %d яблок."

@@ -114,7 +114,9 @@ version (xgettext)
                     ``, ``].join(newline);
         }
         mkdirRecurse(potFile.dirName);
-        write(potFile, header ~ translatableStrings.keys.map!(key => messageFromKey(key)).join(newline));
+        write(potFile, header ~ translatableStrings.keys
+              .sort!((a, b) => translatableStrings[a][0] < translatableStrings[b][0])
+              .map!(key => messageFromKey(key)).join(newline));
         writeln(potFile ~ " generated.");
     }
 
@@ -138,15 +140,14 @@ version (xgettext)
         return message;
     }
 
-    template _(string fmt, int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+    string _(string fmt,
+             int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)(Args args)
     {
-        string _(Args args)
-        {
-            return _!("", fmt, line, file, mod, func, Args)(args);
-        }
+        return _!("", fmt, line, file, mod, func, Args)(args);
     }
 
-    template _(string singular, string plural, int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+    template _(string singular, string plural,
+               int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
         static struct StrInjector
         {
@@ -184,6 +185,14 @@ version (xgettext)
 }
 else
 {
+    import mofile;
+    MoFile moFile;
+    static this()
+    {
+       moFile = MoFile("po/ru_RU.mo");
+       // moFile = MoFile("po/nl_NL.mo");
+    }
+
     /**
     Marks a translatable string.
 
@@ -193,11 +202,11 @@ else
 
     No distinction is made for plural forms.
     */
-    string _(string fmt, Args...)(Args args)
+    string _(string fmt, Args...)(Args args) @safe
     {
         import std.format;
 
-        return format(fmt, args); // TODO
+        return format(moFile.gettext(fmt), args);
     }
 
     /**
@@ -208,10 +217,43 @@ else
     _!("one goose", "%d geese")(n)
     ```
     */
-    string _(string singular, string plural, Args...)(Args args)
+    string _(string singular, string plural, Args...)(Args args) @safe
     {
         import std.format;
 
-        return format(plural, args); // TODO
+        static assert (Args.length > 0, "Missing argument");
+        static if (countFormatSpecifiers(singular) == 0)
+        {
+            import std.string : fromStringz;
+            auto fmt = moFile.ngettext(singular, plural, args[0]);
+            if (countFormatSpecifiers(fmt) == 0)
+                // Hack to prevent orphan format arguments if "%d" is replaced by "one" in the singular form:
+                return ()@trusted{return fromStringz(&(format(fmt~"\0%s", args)[0]));}();
+            return format(fmt, args);
+        }
+        else
+        {
+            return format(moFile.ngettext(singular, plural, args[0]), args);
+        }
+    }
+
+    private int countFormatSpecifiers(string fmt) pure @safe
+    {
+        import std.format : FormatSpec;
+
+        int count = 0;
+        auto f = FormatSpec!char(fmt);
+        if (!__ctfe)
+        {
+            import std.range : nullSink;
+            while (f.writeUpToNextSpec(nullSink))
+                count++;
+        } else {
+            import std.array : appender; // std.range.nullSink does not work at CT.
+            auto a = appender!string;
+            while (f.writeUpToNextSpec(a))
+                count++;
+        }
+        return count;
     }
 }

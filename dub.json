@@ -9,7 +9,10 @@
     "targetType": "sourceLibrary",
     "configurations": [
         {
-            "name": "default"
+            "name": "default",
+            "dependencies": {
+                "mofile": "~>0.2.1"
+            }
         },
         {
             "name": "xgettext",
