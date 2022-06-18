@@ -185,15 +185,6 @@ version (xgettext)
 }
 else
 {
-    import mofile;
-    MoFile moFile;
-    static this()
-    {
-        import core.runtime : Runtime;
-        import std.path : buildPath, dirName;
-        moFile = MoFile(buildPath(Runtime.args[0].dirName, "mo", "ru_RU.mo"));
-    }
-
     /**
     Marks a translatable string.
 
@@ -203,11 +194,11 @@ else
 
     No distinction is made for plural forms.
     */
-    string _(string fmt, Args...)(Args args) @safe
+    string _(string fmt, Args...)(Args args)
     {
         import std.format;
 
-        return format(moFile.gettext(fmt), args);
+        return format(currentLanguage.gettext(fmt), args);
     }
 
     /**
@@ -218,7 +209,7 @@ else
     _!("one goose", "%d geese")(n)
     ```
     */
-    string _(string singular, string plural, Args...)(Args args) @safe
+    string _(string singular, string plural, Args...)(Args args)
     {
         import std.format;
 
@@ -226,7 +217,7 @@ else
         static if (countFormatSpecifiers(singular) == 0)
         {
             import std.string : fromStringz;
-            auto fmt = moFile.ngettext(singular, plural, args[0]);
+            auto fmt = currentLanguage.ngettext(singular, plural, args[0]);
             if (countFormatSpecifiers(fmt) == 0)
                 // Hack to prevent orphan format arguments if "%d" is replaced by "one" in the singular form:
                 return ()@trusted{return fromStringz(&(format(fmt~"\0%s", args)[0]));}();
@@ -234,7 +225,7 @@ else
         }
         else
         {
-            return format(moFile.ngettext(singular, plural, args[0]), args);
+            return format(currentLanguage.ngettext(singular, plural, args[0]), args);
         }
     }
 
@@ -257,4 +248,53 @@ else
         }
         return count;
     }
+}
+
+import mofile;
+
+MoFile currentLanguage;
+
+/**
+Collect a list of available *.mo files.
+
+If no `moPath` is given, files are searched inside the `mo` folder assumed
+to exist besides the file location of the running executable.
+*/
+string[] availableLanguages(string moPath = null)
+{
+    import std.algorithm: map;
+    import std.array : array;
+    import std.file : exists, isDir, dirEntries, SpanMode;
+    import std.path : buildPath, dirName;
+
+    if (moPath == null)
+    {
+        import core.runtime : Runtime;
+        moPath = buildPath(Runtime.args[0].dirName, "mo");
+    }
+
+    if (moPath.exists && moPath.isDir)
+        return dirEntries(moPath, "*.mo", SpanMode.shallow).map!(a => a.name).array;
+
+    return null;
+}
+
+/**
+Returns the language code for the translation contained in `moFile`.
+*/
+string languageCode(string moFile) @safe
+{
+    import std.string : lineSplitter;
+    import std.algorithm : filter, startsWith;
+    return MoFile(moFile).gettext("").lineSplitter.filter!(a => a.startsWith("Language: ")).front["Language: ".length .. $];
+}
+
+/**
+Switch to the language contained in `moFile`.
+*/
+void selectLanguage(string moFile) @safe
+{
+    import std.file : exists, isFile;
+
+    currentLanguage = moFile.exists && moFile.isFile ? MoFile(moFile) : MoFile();
 }

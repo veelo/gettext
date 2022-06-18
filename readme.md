@@ -1,4 +1,4 @@
-# Gettext
+﻿# Gettext
 
 This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction, enabled by D's unique language features, with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to switch between natural languages within the same distribution. Many commercial translation offices support GNU `gettext` PO files (Portable Object), and various editors exist that help with the translation process. The translation process is completely separated from the programming process, so that they may happen asynchronously and without knowledge of eachother.
 
@@ -8,7 +8,8 @@ This Dub package provides internationalization functionality that is compatible 
 - All marked strings that are seen by the compiler are extracted automatically.
 - References to the source location of the original strings are maintained.
 - Plural forms are supported and language-dependent.
-- There are no dependencies on C libraries. There is an optional build-time dependency on the GNU `gettext` utilities for automated generation of MO files.
+- No dependencies on C libraries. There is an optional build-time dependency on the GNU `gettext` utilities for automated generation of MO files.
+- Runtime language discovery and selection.
 
 ## Installation
 
@@ -78,7 +79,7 @@ dub run --config=xgettext -- --help
 The `teohdemo` test contained in this package produces the following `teohdemo.pot`:
 ```po
 # PO Template for teohdemo.
-# Copyright � 2022, SARC B.V.
+# Copyright © 2022, SARC B.V.
 # This file is distributed under the BSL-01 license.
 # Bastiaan Veelo, 2022.
 #
@@ -126,6 +127,44 @@ There are various tools to do this, from dedicated stand-alone editors, editor p
 Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. It supports marking translations that need work and adding notes to translations.
 
 If you have configured Dub as suggested above, the `.mo` files are generated as part of the build process and copied into the `mo` folder in the target path. It is best to configure your revision control system to ignore these files.
+
+## Example
+
+These are some runs of the included test:
+```shell
+d:\SARC\gettext\tests\teohdemo>dub run -q
+Please select a language:
+[0] default
+[1] en_GB
+[2] nl_NL
+[3] ru_RU
+1
+Hello! My name is Joe.
+I'm counting one apple.
+Hello! My name is Schmoe.
+I'm counting 3 apples.
+Hello! My name is Jane.
+I'm counting 5 apples.
+Hello! My name is Doe.
+I'm counting 7 apples.
+
+d:\SARC\gettext\tests\teohdemo>dub run -q
+Please select a language:
+[0] default
+[1] en_GB
+[2] nl_NL
+[3] ru_RU
+3
+Привет! Меня зовут Joe.
+Я считаю 1 яблоко.
+Привет! Меня зовут Schmoe.
+Я считаю 3 яблока.
+Привет! Меня зовут Jane.
+Я считаю 5 яблок.
+Привет! Меня зовут Doe.
+Я считаю 7 яблок.
+```
+Notice how the translation of "apple" in the last translation changes with three different endings dependent on the number of apples.
 
 # Credits
 

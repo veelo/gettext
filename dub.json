@@ -7,12 +7,12 @@
     "description": "Internationalization compatible with the GNU gettext utilities.",
     "license": "BSL-1.0",
     "targetType": "sourceLibrary",
+    "dependencies": {
+        "mofile": "~>0.2.1"
+    },
     "configurations": [
         {
-            "name": "default",
-            "dependencies": {
-                "mofile": "~>0.2.1"
-            }
+            "name": "default"
         },
         {
             "name": "xgettext",
