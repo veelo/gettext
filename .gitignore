@@ -14,3 +14,5 @@ gettext-test-*
 *.obj
 *.lst
 /.vs
+tests/teohdemo/bin
+tests/teohdemo/mo

@@ -8,7 +8,7 @@ This Dub package provides internationalization functionality that is compatible 
 - All marked strings that are seen by the compiler are extracted automatically.
 - References to the source location of the original strings are maintained.
 - Plural forms are supported and language-dependent.
-- There are no compile-time, link-time or run-time dependencies on GNU `gettext`. Translators will need the GNU `gettext` utilities, or any of the more user friendly PO editor alternatives.
+- There are no dependencies on C libraries. There is an optional build-time dependency on the GNU `gettext` utilities for automated generation of MO files.
 
 ## Installation
 
@@ -20,9 +20,15 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
     "dependencies": {
         "gettext": "*"
     },
-    "configurations": [
+     "configurations": [
         {
-            "name": "default"
+            "name": "default",
+            "postBuildCommands": [
+                "dub run gettext:po2mo -- --popath=po --mopath=mo"
+            ],
+            "copyFiles": [
+                "mo"
+            ]
         },
         {
             "name": "xgettext",
@@ -32,7 +38,6 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
             }
         }
     ]
-
 ```
 
 ### `main` function
@@ -118,7 +123,9 @@ Each natural language that is going to be supported requires a `.po` file, which
 
 There are various tools to do this, from dedicated stand-alone editors, editor plugins or modes, web applications to command line utilities.
 
-Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. It supports marking translations that need work and adding notes to translations. It saves the new `.po` file as well as the `.mo` file ready for distribution.
+Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. It supports marking translations that need work and adding notes to translations.
+
+If you have configured Dub as suggested above, the `.mo` files are generated as part of the build process and copied into the `mo` folder in the target path. It is best to configure your revision control system to ignore these files.
 
 # Credits
 

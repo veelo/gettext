@@ -189,8 +189,9 @@ else
     MoFile moFile;
     static this()
     {
-       moFile = MoFile("po/ru_RU.mo");
-       // moFile = MoFile("po/nl_NL.mo");
+        import core.runtime : Runtime;
+        import std.path : buildPath, dirName;
+        moFile = MoFile(buildPath(Runtime.args[0].dirName, "mo", "ru_RU.mo"));
     }
 
     /**

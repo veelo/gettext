@@ -18,5 +18,8 @@
             "name": "xgettext",
             "versions": [ "xgettext" ]
         }
+    ],
+    "subPackages": [
+        "./po2mo/"
     ]
 }

@@ -1,0 +1,10 @@
+{
+    "name": "po2mo",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "description": "Batch execution of gettext msgfmt.",
+    "license": "BSL-1.0",
+    "targetType": "executable"
+}
