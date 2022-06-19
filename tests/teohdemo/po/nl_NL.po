@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-17T21:27:27.6569374Z\n"
+"POT-Creation-Date: 2022-06-19T17:02:56.6502103Z\n"
 "PO-Revision-Date: 2022-06-18 17:19+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,20 +18,22 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1\n"
 
-#: source/mod1.d:8(fun1)
+#: source/mod1.d:11(fun1)
+#, c-format
 msgid "Hello! My name is %s."
 msgstr "Hallo! Mijn naam is %s."
+
+#: source/mod1.d:12(fun1) source/mod2.d:15(fun3)
+msgid "Identical strings share their translation!"
+msgstr "Identieke strings delen hun vertaling!"
 
 #: source/mod2.d:13(fun3)
 msgid "Never used, but nevertheless translated!"
 msgstr "Nooit gebruikt, maar toch vertaald!"
 
 #: source/mod2.d:8(fun2)
+#, c-format
 msgid "I'm counting one apple."
 msgid_plural "I'm counting %d apples."
 msgstr[0] "Ik tel één appel."
 msgstr[1] "Ik tel %d appels."
-
-#: source/mod1.d:11 source/mod2.d:15(fun3)
-msgid "Identical strings share their translation!"
-msgstr "Identieke strings delen hun vertaling!"

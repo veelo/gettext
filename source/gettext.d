@@ -124,7 +124,7 @@ version (xgettext)
     {
         string message = `#: ` ~ translatableStrings[key].join(" ") ~ newline;
         if (key.format == Format.c)
-            message ~= `", c-format` ~ newline;
+            message ~= `#, c-format` ~ newline;
         if (key.singular.length == 0)
         {
             message ~= `msgid "` ~ key.plural ~ `"` ~ newline ~

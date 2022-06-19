@@ -115,7 +115,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-18T13:41:36.9820364Z\n"
+"POT-Creation-Date: 2022-06-19T17:02:56.6502103Z\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -125,7 +125,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #: source/mod1.d:11(fun1)
-", c-format
+#, c-format
 msgid "Hello! My name is %s."
 msgstr ""
 
@@ -138,7 +138,7 @@ msgid "Never used, but nevertheless translated!"
 msgstr ""
 
 #: source/mod2.d:8(fun2)
-", c-format
+#, c-format
 msgid "I'm counting one apple."
 msgid_plural "I'm counting %d apples."
 msgstr[0] ""
