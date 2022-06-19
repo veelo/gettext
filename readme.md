@@ -11,7 +11,8 @@ This Dub package provides internationalization functionality that is compatible 
 - Plural forms are supported and language dependent.
 - No dependencies on C libraries, platfom independent.
 - Automated generation of the PO template.
-- Automated generation of MO files (Machine Object). This step is optional and imposes a build-time dependency on the GNU `gettext` utilities.
+- Automated merging into existing translations (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
+- Automated generation of MO files (Machine Object) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
 - Runtime language discovery and selection.
 
 ## Installation
@@ -29,6 +30,7 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
             "name": "default",
             "postBuildCommands": [
                 "dub run --config=xgettext",
+                "dub run gettext:merge -- --popath=po",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"
             ],
             "copyFiles": [
@@ -91,9 +93,19 @@ dub run gettext:todo -q
 ```
 This prints a list of strings with their source file names and row numbers.
 
+## Added steps to the build process
+
+With the `postBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
+1. Translatable strings are extracted from the sources into a PO template.
+1. Translations in any existing PO files are updated according to the new template.
+1. PO files are converted into binary MO files.
+1. MO files are copied to the target directory.
+
+We'll discuss these in a little more detail below.
+
 ### Creating/updating the PO template automatically
 
-In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. In our setup, this process is taken care of automatically as part of the build process.
+In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we emply D itself to perform this task.
 
 This is how this works: The `dub run --config=xgettext` line in the  `postBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` with an alternative `main` function provided by this package. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag.
 
@@ -145,15 +157,37 @@ msgstr[0] ""
 msgstr[1] ""
 ```
 
+### Updating existing translations automatically
+
+The `"dub run gettext:merge -- --popath=po"` post-build command invokes the `merge` script that is included as a subpackage. This script runs the `msgmerge` utility from GNU `gettext` on the PO files that it finds. When needed, the path to `msgmerge` can be specified with the `--gettextpath` option. Any additional options are passed on to `msgmerge` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html). For example, you can add the `--backup=numbered` option to keep backups of original translations.
+
+Note that if translatable strings were changed in the source, or new ones were added, the PO file is now incomplete. This is detected by the script, which then prints a warning. Changed strings are marked as `#, fuzzy` in the PO file, which can be picked up by editors as needing work. If a lookup in an outdated MO file does not succeed, the application will show the string as it occurs in the source.
+
+### Converting to binary form automatically
+
+Similar to the previous step, the `"dub run gettext:po2mo -- --popath=po --mopath=mo"` post-build command invokes the `po2mo` subpackage, which runs the `msgfmt` utility from GNU `gettext`. This converts all PO files into MO files in the `mo` folder. This folder is then copied to the target directory for inclusion in the distribution of your package. Any additional options are passed on to `msgfmt` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgfmt-Invocation.html).
+
 ## Adding translations
 
-Each natural language that is going to be supported requires a `.po` file, which is derived from the previously generated `.pot` template file. This `.po` file is then edited to fill in the stubs with the correct translations. Lastly the `.po` is converted to binary `.mo` file (Machine Object) which is used for string lookup at run-time. Whenever the source code changes, the translations may need to be updated, which is done by comparing the old `.po` file with the new `.pot` file.
+Each natural language that is going to be supported requires a `.po` file, which is derived from the generated `.pot` template file. This `.po` file is then edited to fill in the stubs with the correct translations.
 
 There are various tools to do this, from dedicated stand-alone editors, editor plugins or modes, web applications to command line utilities.
 
 Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. It supports marking translations that need work and adding notes to translations.
 
-If you have configured Dub as suggested above, the `.mo` files are generated as part of the build process and copied into the `mo` folder in the target path.
+## Updating translations
+
+Any translations that have fallen behind the template will need to be updated by a translator. To detect any such translations, you can scan for warnings in the output of this command:
+```shell
+dub run -q gettext:merge -- --popath=po
+```
+
+PO file editors will typically allow translators to quickly jump between strings that need their attention.
+
+After a PO file has been edited, MO files must be regenerated with this command:
+```shell
+dub run gettext:po2mo -- --popath=po --mopath=mo
+```
 
 ## Example
 
@@ -202,7 +236,6 @@ Reading of MO files was implemented by Roman Chistokhodov.
 # TODO
 
 - Warnings against compile-time string extraction.
-- Refreshing translations when source code changes. Logging fuzzy translations [[1]](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html).
 - Comments to translators, [proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
 - Disambiguation with [contexts](https://www.gnu.org/software/gettext/manual/html_node/Contexts.html).
 - Quotes inside WYSIWYG strings.

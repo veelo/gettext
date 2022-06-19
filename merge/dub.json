@@ -1,0 +1,13 @@
+{
+    "name": "merge",
+    "description": "Merge existing translations with a new template.",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "dependencies": {
+        "colorize": "~>1.0.5"
+    }
+}

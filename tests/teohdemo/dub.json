@@ -19,6 +19,7 @@
             "name": "default",
             "postBuildCommands": [
                 "dub run --config=xgettext",
+                "dub run gettext:merge -- --popath=po",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"
             ],
             "copyFiles": [

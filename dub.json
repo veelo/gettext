@@ -20,6 +20,7 @@
         }
     ],
     "subPackages": [
+        "./merge/",
         "./po2mo/",
         "./todo/"
     ]
