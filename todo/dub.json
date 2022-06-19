@@ -1,0 +1,13 @@
+{
+    "name": "todo",
+    "description": "Find unmarked string literals.",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "dependencies": {
+        "libdparse": "~>0.19.3"
+    }
+}

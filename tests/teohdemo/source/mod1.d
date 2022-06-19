@@ -11,4 +11,3 @@ void fun1(string name)
     writeln(_!"Hello! My name is %s."(name));
     auto s = _!const_s; // Defer translation of constants to run-time.
 }
-

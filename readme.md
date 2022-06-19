@@ -6,6 +6,7 @@ This Dub package provides internationalization functionality that is compatible 
 
 - Multiple identical strings are translated once.
 - All marked strings that are seen by the compiler are extracted automatically.
+- Supports listing unmarked strings in the project.
 - References to the source location of the original strings are maintained.
 - Plural forms are supported and language dependent.
 - No dependencies on C libraries, platfom independent.
@@ -53,20 +54,6 @@ Insert the following line right above your `main` function:
 version (xgettext) {} else
 ```
 
-### Source files
-
-Prepend `_!` in front of every string literal that needs to be translated. For instance:
-```d
-    writeln(_!"This string is to be translated");
-    writeln("This string will remain untranslated.");
-```
-
-Calls to `std.format` are to be replaced with `_!` like so:
-```d
-    format!"%d green bottles hanging on the wall"(n); // Before
-    _!"%d green bottles hanging on the wall"(n);      // After
-```
-
 ### Ignore generated files
 
 The PO template and machine object files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact in the string extraction process. If you use Git, add these lines to `.gitignore`:
@@ -76,20 +63,46 @@ The PO template and machine object files are generated, and need not be kept und
 *.mo
 ```
 
-## Creating/updating the PO template automatically
+## Usage
 
-In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. In our setup, this process is taken care of by the following `postBuildCommand` in your Dub configuration:
-```shell
-dub run --config=xgettext
+### Marking strings
+
+Prepend `_!` in front of every string literal that needs to be translated. For instance:
+```d
+    writeln(_!"This string is to be translated");
+    writeln("This string will remain untranslated.");
 ```
-This compiles and runs your project into an alternative `targetPath` with an alternative `main` function provided by this package, which makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag.
+
+Calls to `std.format` are to be replaced with `_!` also. To properly handle plural forms, supply both the singular and plural form like this:
+```d
+    // Before:
+    format!"%d green bottles hanging on the wall"(n);
+    // After:
+    _!("one green bottle hanging on the wall",
+       "%d green bottles hanging on the wall")(n);
+```
+Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular form.
+
+### Finding unmarked strings
+
+To get an overview of all string literals in your project that are not marked as translatable, execute the following in your project root folder:
+```shell
+dub run gettext:todo -q
+```
+This prints a list of strings with their source file names and row numbers.
+
+### Creating/updating the PO template automatically
+
+In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. In our setup, this process is taken care of automatically as part of the build process.
+
+This is how this works: The `dub run --config=xgettext` line in the  `postBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` with an alternative `main` function provided by this package. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag.
 
 By default this creates (or overwrites) the PO template in the `po` folder of your project. This can be changed by using options; To see which options are accepted, run the command with the `--help` option:
 ```shell
 dub run --config=xgettext -- --help
 ```
 
-### Example
+#### Example
 The `teohdemo` test contained in this package produces the following `teohdemo.pot`:
 ```po
 # PO Template for teohdemo.
@@ -189,7 +202,7 @@ Reading of MO files was implemented by Roman Chistokhodov.
 # TODO
 
 - Warnings against compile-time string extraction.
-- Refreshing translations when source code changes. Logging fuzzy translations.
+- Refreshing translations when source code changes. Logging fuzzy translations [[1]](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html).
 - Comments to translators, [proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
 - Disambiguation with [contexts](https://www.gnu.org/software/gettext/manual/html_node/Contexts.html).
 - Quotes inside WYSIWYG strings.
