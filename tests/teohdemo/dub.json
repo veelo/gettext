@@ -18,6 +18,7 @@
         {
             "name": "default",
             "postBuildCommands": [
+                "dub run --config=xgettext",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"
             ],
             "copyFiles": [
@@ -26,6 +27,7 @@
         },
         {
             "name": "xgettext",
+            "targetPath": ".xgettext",
             "versions": [ "xgettext" ],
             "subConfigurations": {
                 "gettext": "xgettext"
