@@ -12,6 +12,7 @@ int main(string[] args) {
 
     auto helpInformation = getopt(
                                   args,
+                                  std.getopt.config.passThrough,
                                   "p|popath",      "Path to Portable Object input files.", &poPath,
                                   "m|mopath",      "Path to Machine Object output files.", &moPath,
                                   "g|gettextpath", "Path to the msgfmt utility, part of GNU gettext.", &gettextPath);
@@ -46,7 +47,7 @@ int main(string[] args) {
     Pid[] pids;
     foreach (poFile; poFiles)
     {
-        auto commands = [msgfmt, poFile, "-o", buildPath(moPath.pathSplitter.buildPath, poFile.baseName.setExtension(".mo"))];
+        auto commands = [msgfmt, poFile, "--no-hash", "-o", buildPath(moPath.pathSplitter.buildPath, poFile.baseName.setExtension(".mo"))] ~ args[1 .. $];
         writeln(commands.join(" "));
         pids ~= spawnProcess(commands);
     }
