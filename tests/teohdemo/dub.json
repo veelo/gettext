@@ -7,7 +7,7 @@
     "description": "Replica of H.S. Teoh's proof of concept from https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com",
     "license": "BSL-01",
     "targetType": "executable",
-    "targetPath":  "bin",
+    "targetPath": "bin",
     "dependencies": {
         "gettext": {
             "path": "../../",

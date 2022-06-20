@@ -93,6 +93,30 @@ dub run gettext:todo -q
 ```
 This prints a list of strings with their source file names and row numbers.
 
+### Compiler errors
+
+Beware that string literals used for static initialization cannot be marked as translatable. Since the language can be changed at run time, string values cannot be evaluated at compile time.
+
+For example, changing this line in `tests\teohdemo\source\mod1.d`
+```d
+const const_s = "Identical strings share their translation!";
+```
+into
+```d
+const const_s = _!"Identical strings share their translation!";
+```
+will produce this error:
+```shell
+gettext.d(201,23): Error: static variable `currentLanguage` cannot be read at compile time
+gettext.d(201,22):        called from here: `format(currentLanguage.gettext("Identical strings share their translation!"))`
+mod1.d(7,17):        called from here: `_()`
+```
+The solution, as demonstrated by the example, is to translate the string everywhere this constant is used, like
+```d
+_!const_s
+```
+
+
 ## Added steps to the build process
 
 With the `postBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
@@ -235,7 +259,6 @@ Reading of MO files was implemented by Roman Chistokhodov.
 
 # TODO
 
-- Warnings against compile-time string extraction.
 - Comments to translators, [proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
 - Disambiguation with [contexts](https://www.gnu.org/software/gettext/manual/html_node/Contexts.html).
 - Quotes inside WYSIWYG strings.
