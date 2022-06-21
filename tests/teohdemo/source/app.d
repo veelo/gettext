@@ -1,9 +1,11 @@
 import std.conv : to;
 import mod1, mod2;
 
-version (xgettext) {} else
 void main()
 {
+    import gettext;
+    mixin(gettext.main);
+
     selectLanguage;
     foreach (i, name; ["Joe", "Schmoe", "Jane", "Doe"])
     {

@@ -57,7 +57,8 @@ class TodoVisitor : ASTVisitor
 
     override void visit(const TemplateInstance ti)
     {
-        if (ti.identifier.text == "_")
+        if (ti.identifier.text == "tr" ||
+            ti.identifier.text == "_")
         {
             isTranslatable = true;
             scope(exit) isTranslatable = false;

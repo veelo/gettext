@@ -28,6 +28,29 @@ module gettext;
 
 version (xgettext) // String extraction mode.
 {
+    bool scan()
+    {
+        import std.getopt;
+        import std.path : baseName, buildPath, setExtension;
+        import core.runtime : Runtime;
+
+        auto args = Runtime.args;
+        potFile = buildPath("po", args[0].baseName);
+
+        auto helpInformation = getopt(args,
+                                      "output|o", "The path for the PO template file.", &potFile);
+        if (helpInformation.helpWanted)
+        {
+            ()@trusted{
+                defaultGetoptPrinter("Usage:\n\tdub run --config=xgettext [-- <options>]\nOptions:", helpInformation.options);
+            }();
+        }
+        else
+            writePOT(potFile.setExtension("pot"));
+        return args.length > 0; // Always true, but the compiler has no idea.
+    }
+
+
     import std.typecons : Tuple;
     import std.array : join;
     import std.ascii : newline;
@@ -40,27 +63,10 @@ version (xgettext) // String extraction mode.
 
     string potFile;
 
-    void main(string[] args) @safe
-    {
-        import std.getopt;
-        import std.path : baseName, buildPath, setExtension;
-
-        potFile = buildPath("po", args[0].baseName);
-
-        auto helpInformation = getopt(args,
-                                      "output|o", "The path for the PO template file.", &potFile);
-        if (helpInformation.helpWanted)
-        {
-            ()@trusted{
-            defaultGetoptPrinter("Usage:\n\tdub run --config=xgettext [-- <options>]\nOptions:", helpInformation.options);}();
-        }
-        else
-            writePOT(potFile.setExtension("pot"));
-    }
 
     private void writePOT(string potFile) @safe
     {
-        import std.algorithm : map, sort;
+        import std.algorithm : cmp, map, sort;
         import std.file : mkdirRecurse, write;
         import std.path : baseName, dirName;
         import std.stdio;
@@ -141,7 +147,7 @@ version (xgettext) // String extraction mode.
         }
         mkdirRecurse(potFile.dirName);
         write(potFile, header ~ translatableStrings.keys
-              .sort!((a, b) => translatableStrings[a][0] < translatableStrings[b][0])
+              .sort!((a, b) => cmp(translatableStrings[a][0], translatableStrings[b][0]) < 0)
               .map!(key => messageFromKey(key)).join(newline));
         writeln(potFile ~ " generated.");
     }
@@ -307,6 +313,34 @@ else // Translation mode.
         return count;
     }
 }
+
+/**
+Code to be mixed in at the top of your `main()` function.
+
+Examples:
+```
+void main()
+{
+import gettext;
+mixin(gettext.main);
+
+// Your code.
+}
+```
+*/
+enum main = q{
+    version (xgettext)
+    {
+        if (scan) // Prevent unreachable code warning after mixin.
+        {
+            import std.traits : ReturnType;
+            static if (is (ReturnType!main == void))
+                return;
+            else
+                return 0;
+        }
+    }
+};
 
 import mofile;
 

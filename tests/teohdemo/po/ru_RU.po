@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-21T12:29:59.1253895Z\n"
+"POT-Creation-Date: 2022-06-21T22:45:32.2564892Z\n"
 "PO-Revision-Date: 2022-06-18 17:23+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -19,13 +19,13 @@ msgstr ""
 "%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.1\n"
 
-#: source/mod1.d:13(fun1)
-msgid "Hello! My name is %s."
-msgstr "Привет! Меня зовут %s."
-
-#: source/mod1.d:15(fun1) source/mod2.d:15(fun3)
+#: source/mod1.d:13(fun1) source/mod2.d:15(fun3)
 msgid "Identical strings share their translation!"
 msgstr "Одинаковые строки имеют общий перевод!"
+
+#: source/mod1.d:7
+msgid "Hello! My name is %s."
+msgstr "Привет! Меня зовут %s."
 
 #: source/mod2.d:13(fun3)
 msgid "Never used, but nevertheless translated!"

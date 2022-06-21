@@ -3,14 +3,12 @@ module mod1;
 import std.stdio;
 import gettext;
 
-// Statically initialized strings cannot be translated. Language is a run-time thing.
-const const_s = "Identical strings share their translation!";
+// Constants are supported. Their translation is retrieved when they are evaluated.
+immutable hello = tr!"Hello! My name is %s.";
 
 void fun1(string name)
 {
-    import std.format;
+    writefln(hello, name);
 
-    writeln(format(tr!"Hello! My name is %s.", name));
-
-    auto s = tr!const_s; // Defer translation of constants to run-time.
+    auto s = tr!"Identical strings share their translation!";
 }
