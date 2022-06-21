@@ -246,21 +246,26 @@ else // Translation mode.
     */
     @safe private struct TranslatableString
     {
-        string str;
-        string gettext()
+        const string str;
+        string gettext() const
         {
             return currentLanguage.gettext(str);
         }
         alias gettext this;
+        string toString() const // Called when a tr!"" literal or constant occurs in a writeln().
+        {
+            return gettext;
+        }
     }
     @safe private struct TranslatableStringPlural
     {
-        string str, strpl;
-        this(string str, string strpl) { // this is unfortunately necessary
+        const string str, strpl;
+        this(string str, string strpl) // this is unfortunately necessary
+        {
             this.str = str;
             this.strpl = strpl;
         }
-        string opCall(size_t number)
+        string opCall(size_t number) const
         {
             import std.format;
 
@@ -270,7 +275,7 @@ else // Translation mode.
         }
         struct StrPlusArg
         {
-            string fmt;
+            const string fmt;
             bool hasArg;
             this(string fmt)
             {
