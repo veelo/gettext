@@ -253,9 +253,7 @@ Notice how the translation of "apple" in the last translation changes with three
 
 # Credits
 
-The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com).
-
-Reading of MO files was implemented by Roman Chistokhodov.
+The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com), with optimizations by Steven Schveighoffer [[3]](https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com). Reading of MO files was implemented by Roman Chistokhodov.
 
 # TODO
 

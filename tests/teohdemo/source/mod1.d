@@ -8,6 +8,9 @@ const const_s = "Identical strings share their translation!";
 
 void fun1(string name)
 {
-    writeln(_!"Hello! My name is %s."(name));
-    auto s = _!const_s; // Defer translation of constants to run-time.
+    import std.format;
+
+    writeln(format(tr!"Hello! My name is %s.", name));
+
+    auto s = tr!const_s; // Defer translation of constants to run-time.
 }

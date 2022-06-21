@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-19T17:02:56.6502103Z\n"
+"POT-Creation-Date: 2022-06-21T12:29:59.1253895Z\n"
 "PO-Revision-Date: 2022-06-18 17:22+0200\n"
 "Last-Translator: EMAIL@ADDRESS\n"
 "Language-Team: English (British)\n"
@@ -19,12 +19,11 @@ msgstr ""
 "X-Generator: Poedit 3.1\n"
 "X-Poedit-Bookmarks: -1,2,3,-1,-1,-1,-1,-1,-1,-1\n"
 
-#: source/mod1.d:11(fun1)
-#, c-format
+#: source/mod1.d:13(fun1)
 msgid "Hello! My name is %s."
 msgstr "Hello! My name is %s."
 
-#: source/mod1.d:12(fun1) source/mod2.d:15(fun3)
+#: source/mod1.d:15(fun1) source/mod2.d:15(fun3)
 msgid "Identical strings share their translation!"
 msgstr "Identical strings share their translation!"
 

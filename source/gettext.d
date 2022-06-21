@@ -1,6 +1,32 @@
+/**
+Internationalization compatible with GNU gettext.
+Authors:
+$(LINK2 https://github.com/veelo, Bastiaan Veelo)
+Copyright:
+SARC B.V., 2022
+License:
+$(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+See_Also:
+$(LINK2 https://www.gnu.org/software/gettext/, GNU gettext utilities)
+
+
+Translatable strings are marked by instantiating the `tr` template, like so:
+```
+writeln(tr!"Translatable message");
+```
+
+If you'd rather use an underscore to mark translatable strings, [as the GNU
+gettext documentation suggests](https://www.gnu.org/software/gettext/manual/html_node/Mark-Keywords.html),
+you can use an alias:
+```
+import gettext : _ = tr;    // Customary in GNU software.
+writeln(_!"Translatable message");
+```
+*/
+
 module gettext;
 
-version (xgettext)
+version (xgettext) // String extraction mode.
 {
     import std.typecons : Tuple;
     import std.array : join;
@@ -125,9 +151,9 @@ version (xgettext)
         string message = `#: ` ~ translatableStrings[key].join(" ") ~ newline;
         if (key.format == Format.c)
             message ~= `#, c-format` ~ newline;
-        if (key.singular.length == 0)
+        if (key.plural == null)
         {
-            message ~= `msgid "` ~ key.plural ~ `"` ~ newline ~
+            message ~= `msgid "` ~ key.singular ~ `"` ~ newline ~
                        `msgstr ""` ~ newline;
         }
         else
@@ -140,14 +166,8 @@ version (xgettext)
         return message;
     }
 
-    string _(string fmt,
-             int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)(Args args)
-    {
-        return _!("", fmt, line, file, mod, func, Args)(args);
-    }
-
-    template _(string singular, string plural,
-               int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+    template tr(string singular, string plural = null,
+                int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
         static struct StrInjector
         {
@@ -172,80 +192,113 @@ version (xgettext)
                     else
                         return Format.c;
                 }
-                translatableStrings[Key(singular, plural, format)] ~= reference;
+                translatableStrings.require(Key(singular, plural, format)) ~= reference;
             }
         }
-        string _(Args args)
+        string tr(Args args)
         {
-            import std.format;
-
-            return format(plural, args); // no-op
+            return null; // no-op
         }
     }
 }
-else
+else // Translation mode.
 {
-    /**
-    Marks a translatable string.
+    version (docs) {
+        /**
+        Translate `message`.
 
-    The string may be a format string followed by optional arguments.
-    
-    `_!"Hello %s"(name)` is equivalent to `std.format!"Hello %s"(name)`.
+        This does *not* instantiate a new function for every marked string
+        (the signature is fabricated for the sake of documentation).
 
-    No distinction is made for plural forms.
-    */
-    string _(string fmt, Args...)(Args args)
-    {
-        import std.format;
+        Returns: The translation of `message` if one exists in the selected
+        language, or `message` otherwise.
+        See_Also: [selectLanguage]
 
-        return format(currentLanguage.gettext(fmt), args);
+        Examples:
+        ```
+        writeln(tr!"Translatable message");
+        ```
+        */
+        string tr(string message)() {};
+        /**
+        Translate a message in the correct plural form.
+
+        This does *not* instantiate a new function for every marked string
+        (the signature is fabricated for the sake of documentation).
+
+        The first argument should be in singular form, the second in plural
+        form. Note that the format specifier `%d` is optional.
+
+        Returns: The translation if one exists in the selected
+        language, or the corresponding original otherwise.
+        See_Also: [selectLanguage]
+
+        Examples:
+        ```
+        writeln(tr!("There is a goose!", "There are %d geese!")(n));
+        ```
+        */
+        string tr(string singular, string plural)(size_t n) {};
     }
-
-    /**
-    Marks a translatable string with singular and plural forms.
-
-    Both forms may be format strings, as in
-    ```
-    _!("one goose", "%d geese")(n)
-    ```
+    /*
+    This struct+template trick allows the string to be passed as template parameter without instantiating
+    a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com
     */
-    string _(string singular, string plural, Args...)(Args args)
+    @safe private struct TranslatableString
     {
-        import std.format;
+        string str;
+        string gettext()
+        {
+            return currentLanguage.gettext(str);
+        }
+        alias gettext this;
+    }
+    @safe private struct TranslatableStringPlural
+    {
+        string str, strpl;
+        this(string str, string strpl) { // this is unfortunately necessary
+            this.str = str;
+            this.strpl = strpl;
+        }
+        string opCall(size_t number)
+        {
+            import std.format;
 
-        static assert (Args.length > 0, "Missing argument");
-        static if (countFormatSpecifiers(singular) == 0)
-        {
-            import std.string : fromStringz;
-            auto fmt = currentLanguage.ngettext(singular, plural, args[0]);
-            if (countFormatSpecifiers(fmt) == 0)
-                // Hack to prevent orphan format arguments if "%d" is replaced by "one" in the singular form:
-                return ()@trusted{return fromStringz(&(format(fmt~"\0%s", args)[0]));}();
-            return format(fmt, args);
+            int n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
+            auto f = StrPlusArg(currentLanguage.ngettext(str, strpl, n));
+            return f.hasArg ? format(f.fmt, n) : f.fmt;
         }
+        struct StrPlusArg
+        {
+            string fmt;
+            bool hasArg;
+            this(string fmt)
+            {
+                this.fmt = fmt;
+                auto fs = countFormatSpecifiers(fmt);
+                assert(fs == 0 || fs == 1, "Too many format specifiers, 1 maximally");
+                hasArg = fs == 1;
+            }
+        }
+    }
+    template tr(string singular, string plural = null)
+    {
+        static if (plural == null)
+            enum tr = TranslatableString(singular);
         else
-        {
-            return format(currentLanguage.ngettext(singular, plural, args[0]), args);
-        }
+            enum tr = TranslatableStringPlural(singular, plural);
     }
 
     private int countFormatSpecifiers(string fmt) pure @safe
     {
         import std.format : FormatSpec;
 
+        static void ns(const(char)[] arr) {} // the simplest output range
+        auto nullSink = &ns;
         int count = 0;
         auto f = FormatSpec!char(fmt);
-        if (!__ctfe)
-        {
-            import std.range : nullSink;
-            while (f.writeUpToNextSpec(nullSink))
-                count++;
-        } else {
-            import std.array : appender; // std.range.nullSink does not work at CT.
-            auto a = appender!string;
-            while (f.writeUpToNextSpec(a))
-                count++;
-        }
+        while (f.writeUpToNextSpec(nullSink))
+            count++;
         return count;
     }
 }
@@ -255,7 +308,7 @@ import mofile;
 MoFile currentLanguage;
 
 /**
-Collect a list of available *.mo files.
+Collect a list of available `*.mo` files.
 
 If no `moPath` is given, files are searched inside the `mo` folder assumed
 to exist besides the file location of the running executable.
