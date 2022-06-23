@@ -26,6 +26,15 @@ void main()
     
     selectLanguage;
 
+    // All current and future string formats are recognised.
+    auto json = tr!(`"dependencies": { "gettext": "*" }`);
+    auto path = tr!(r"C:\Program Files\gettext-iconv\bin\msgfmt.exe");
+    auto delimited = tr!(q"EOS
+This
+is a multi-line
+heredoc string
+EOS");
+
     // Pass a note to the translator.
     auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
 

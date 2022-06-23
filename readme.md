@@ -5,6 +5,7 @@ This Dub package provides internationalization functionality that is compatible 
 ## Features
 
 - All marked strings that are seen by the compiler are extracted automatically.
+- All (current and future) [D string literal formats](https://dlang.org/spec/lex.html#string_literals) are supported.
 - Constants, immutables, static initializers, manifest constants and anonimous enums can be marked as translatable (a D specialty).
 - Plural forms are language dependent.
 - Multiple identical strings are translated once, unless they are given different contexts.
@@ -329,10 +330,10 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 
 # TODO
 
-- Quotes inside WYSIWYG strings.
 - Memoization. Make it optional through Dub configuration.
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
+- Wide strings.
 
 # Bugs
 

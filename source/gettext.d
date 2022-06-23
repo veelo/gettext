@@ -161,6 +161,13 @@ version (xgettext) // String extraction mode.
         writeln(potFile ~ " generated.");
     }
 
+    string stringify(string str) @safe pure
+    {
+        import std.conv : text;
+
+        return text([str])[1 .. $-1];
+    }
+
     string messageFromKey(Key key) @safe
     {
         string message;
@@ -171,16 +178,16 @@ version (xgettext) // String extraction mode.
         if (key.format == Format.c)
             message ~= `#, c-format` ~ newline;
         if (key.context != null)
-            message ~= `msgctxt "` ~ key.context ~ `"` ~ newline;
+            message ~= `msgctxt ` ~ key.context.stringify ~ newline;
         if (key.plural == null)
         {
-            message ~= `msgid "` ~ key.singular ~ `"` ~ newline ~
+            message ~= `msgid ` ~ key.singular.stringify ~ newline ~
                        `msgstr ""` ~ newline;
         }
         else
         {
-            message ~= `msgid "` ~ key.singular ~ `"` ~ newline ~
-                       `msgid_plural "` ~ key.plural ~ `"` ~ newline ~
+            message ~= `msgid ` ~ key.singular.stringify ~ newline ~
+                       `msgid_plural ` ~ key.plural.stringify ~ newline ~
                        `msgstr[0] ""` ~ newline ~
                        `msgstr[1] ""` ~ newline;
         }
