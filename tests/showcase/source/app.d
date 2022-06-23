@@ -26,6 +26,18 @@ void main()
     
     selectLanguage;
 
+    // Pass a note to the translator.
+    auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
+
+    // Disambiguate identical sentenses.
+    auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File|Open"]);
+    auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer|Open"]);
+
+    auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
+    auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
+                                              Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
+                                                       `of the ship is below the water level.`]);
+
     // Plural form in format strings.
     void report(Event event)
     {

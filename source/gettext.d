@@ -26,6 +26,9 @@ writeln(_!"Translatable message");
 
 module gettext;
 
+/// Optional attribute categories.
+enum Tr { note, context }
+
 version (xgettext) // String extraction mode.
 {
     bool scan()
@@ -58,8 +61,10 @@ version (xgettext) // String extraction mode.
     enum Format {plain, c}
     alias Key = Tuple!(string, "singular",
                        string, "plural",
-                       Format, "format");
+                       Format, "format",
+                       string, "context");
     private string[][Key] translatableStrings;
+    private string[][Key] comments;
 
     string potFile;
 
@@ -146,6 +151,10 @@ version (xgettext) // String extraction mode.
                     ``, ``].join(newline);
         }
         mkdirRecurse(potFile.dirName);
+        ()@trusted {
+            translatableStrings.rehash;
+            comments.rehash;
+        }();
         write(potFile, header ~ translatableStrings.keys
               .sort!((a, b) => cmp(translatableStrings[a][0], translatableStrings[b][0]) < 0)
               .map!(key => messageFromKey(key)).join(newline));
@@ -154,9 +163,15 @@ version (xgettext) // String extraction mode.
 
     string messageFromKey(Key key) @safe
     {
-        string message = `#: ` ~ translatableStrings[key].join(" ") ~ newline;
+        string message;
+        if (auto c = key in comments)
+            foreach (comment; *c)
+                message ~= `#. ` ~ comment ~ newline;
+        message ~= `#: ` ~ translatableStrings[key].join(" ") ~ newline;
         if (key.format == Format.c)
             message ~= `#, c-format` ~ newline;
+        if (key.context != null)
+            message ~= `msgctxt "` ~ key.context ~ `"` ~ newline;
         if (key.plural == null)
         {
             message ~= `msgid "` ~ key.singular ~ `"` ~ newline ~
@@ -172,7 +187,14 @@ version (xgettext) // String extraction mode.
         return message;
     }
 
-    template tr(string singular, string plural = null,
+    template tr(string singular, string[Tr] attributes = null,
+                int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+    {
+        alias tr = tr!(singular, null, attributes,
+                       line, file, mod, func, Args);
+    }
+
+    template tr(string singular, string plural, string[Tr] attributes = null,
                 int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
         static struct StrInjector
@@ -198,7 +220,15 @@ version (xgettext) // String extraction mode.
                     else
                         return Format.c;
                 }
-                translatableStrings.require(Key(singular, plural, format)) ~= reference;
+                string context()
+                {
+                    if (auto c = Tr.context in attributes)
+                        return *c;
+                    return null;
+                }
+                translatableStrings.require(Key(singular, plural, format, context)) ~= reference;
+                if (auto c = Tr.note in attributes)
+                   comments.require(Key(singular, plural, format, context)) ~= *c;
             }
         }
         string tr(Args args)
@@ -266,7 +296,7 @@ else // Translation mode.
     @safe private struct TranslatableStringPlural
     {
         string str, strpl;
-        this(string str, string strpl) // this is unfortunately necessary
+        this(string str, string strpl) // This is unfortunately necessary.
         {
             this.str = str;
             this.strpl = strpl;
@@ -292,12 +322,13 @@ else // Translation mode.
                 return trans;
         }
     }
-    template tr(string singular, string plural = null)
+    template tr(string singular, string[Tr] attributes = null)
     {
-        static if (plural == null)
-            enum tr = TranslatableString(singular);
-        else
-            enum tr = TranslatableStringPlural(singular, plural);
+        enum tr = TranslatableString(singular);
+    }
+    template tr(string singular, string plural, string[Tr] attributes = null)
+    {
+        enum tr = TranslatableStringPlural(singular, plural);
     }
 
     private int countFormatSpecifiers(string fmt) pure @safe

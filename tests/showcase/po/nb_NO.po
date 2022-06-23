@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-23T10:02:33.0282078Z\n"
-"PO-Revision-Date: 2022-06-23 11:59+0200\n"
+"POT-Creation-Date: 2022-06-23T16:20:53.0390905Z\n"
+"PO-Revision-Date: 2022-06-23 18:38+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: nb_NO\n"
@@ -50,11 +50,37 @@ msgstr "København"
 
 #: source/app.d:47(main)
 msgid "Sidney"
-msgstr ""
+msgstr "Sidney"
 
 #: source/app.d:5
 msgid "Monday"
 msgstr "mandag"
+
+#: source/app.d:51(main)
+msgctxt "Menu|File|Open"
+msgid "Open"
+msgstr "Åpne"
+
+#: source/app.d:52(main)
+msgctxt "Menu|File|Printer|Open"
+msgid "Open"
+msgstr "Åpne"
+
+#: source/app.d:54(main)
+msgctxt "document"
+msgid "Review the draft."
+msgstr "Gjennomgå utkastet."
+
+#. Nautical term! "Draft" = how deep the bottom of the ship is below the water level.
+#: source/app.d:55(main)
+msgctxt "nautical"
+msgid "Review the draft."
+msgstr "Kontroller dypgangen."
+
+#. Proper name. Phonetically ˈwɔːltə braɪt
+#: source/app.d:57(main)
+msgid "Walter Bright"
+msgstr "Walter Bright"
 
 #: source/app.d:6
 msgid "Tuesday"

@@ -7,7 +7,8 @@ This Dub package provides internationalization functionality that is compatible 
 - All marked strings that are seen by the compiler are extracted automatically.
 - Constants, immutables, static initializers, manifest constants and anonimous enums can be marked as translatable (a D specialty).
 - Plural forms are language dependent.
-- Multiple identical strings are translated once.
+- Multiple identical strings are translated once, unless they are given different contexts.
+- Notes to the translator can be attached to individual translatable strings.
 - Code occurrences of strings are communicated to the translator.
 - Available languages are discovered and selected at run-time.
 - Platfom independent, not linked with C libraries.
@@ -86,7 +87,7 @@ writeln(tr!("one green bottle hanging on the wall",
 ```
 Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular form.
 
-Many languages have not just two forms like the english language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator.
+Many languages have not just two forms like the English language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator.
 
 ### Marking format strings
 
@@ -103,6 +104,35 @@ foreach (where; [tr!"hand", tr!"bush"])
 Note: all specifiers need to have a position argument in this case. Again, the specifier with the highest position argument will never be seen by `format`.
 
 On a side note, some translations may need a reordering of words, so translators may need to use position arguments in their translated format strings anyway.
+
+### Passing attributes
+
+Optionally, two kinds of attributes can be passed to `tr`, in the form of an associative array initializer. These are for passing notes to the translator and for disambiguating identical sentences with different meaning.
+
+#### Passing notes to the translator
+
+Sometimes a sentence can be interpreted to mean different things, and then it is important to be able to clarify things for the translator. Here is an example of how to do this:
+```d
+auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
+```
+
+The GNU `gettext` manual has a section [about the translation of proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
+
+#### Disambiguate identical sentences
+
+Multiple occurrences of the same sentence are combined into one translation by default. In some cases, that may not work well. Some language, for example, may need to translate identical menu items in different menus differently. These can be disambiguated by adding a context like so:
+```d
+auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File|Open"]);
+auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer|Open"]);
+```
+
+Notes and comments can be combined in any order:
+```d
+auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
+auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
+                                          Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
+                                                   `of the ship is below the water level.`]);
+```
 
 ### Selecting a translation
 
@@ -299,8 +329,6 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 
 # TODO
 
-- Comments to translators, [proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
-- Disambiguation with [contexts](https://www.gnu.org/software/gettext/manual/html_node/Contexts.html).
 - Quotes inside WYSIWYG strings.
 - Memoization. Make it optional through Dub configuration.
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
@@ -308,4 +336,4 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 
 # Bugs
 
-- c-format is only added for plural forms.
+- `c-format` is only added for plural forms.
