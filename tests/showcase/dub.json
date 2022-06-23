@@ -1,0 +1,38 @@
+{
+    "name": "showcase",
+    "authors": [
+        "Bastiaan Veelo"
+    ],
+    "copyright": "Copyright © 2022, SARC B.V.",
+    "description": "A more advanced demo.",
+    "license": "BSL-01",
+    "targetType": "executable",
+    "targetPath": "bin",
+    "dependencies": {
+        "gettext": {
+            "path": "../../",
+            "version": "*"
+        }
+    },
+    "configurations": [
+        {
+            "name": "default",
+            "postBuildCommands": [
+                "dub run --config=xgettext",
+                "dub run gettext:merge -- --popath=po --backup=none",
+                "dub run gettext:po2mo -- --popath=po --mopath=mo"
+            ],
+            "copyFiles": [
+                "mo"
+            ]
+        },
+        {
+            "name": "xgettext",
+            "targetPath": ".xgettext",
+            "versions": [ "xgettext" ],
+            "subConfigurations": {
+                "gettext": "xgettext"
+            }
+        }
+    ]
+}

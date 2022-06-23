@@ -252,7 +252,7 @@ else // Translation mode.
     */
     @safe private struct TranslatableString
     {
-        const string str;
+        string str;
         string gettext() const
         {
             return currentLanguage.gettext(str);
@@ -265,7 +265,7 @@ else // Translation mode.
     }
     @safe private struct TranslatableStringPlural
     {
-        const string str, strpl;
+        string str, strpl;
         this(string str, string strpl) // this is unfortunately necessary
         {
             this.str = str;
@@ -274,22 +274,22 @@ else // Translation mode.
         string opCall(size_t number) const
         {
             import std.format;
+            import std.algorithm : max;
 
-            int n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
-            auto f = StrPlusArg(currentLanguage.ngettext(str, strpl, n));
-            return f.hasArg ? format(f.fmt, n) : f.fmt;
-        }
-        struct StrPlusArg
-        {
-            const string fmt;
-            bool hasArg;
-            this(string fmt)
+            const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
+            const trans =  currentLanguage.ngettext(str, strpl, n);
+            if (countFormatSpecifiers(trans) == countFormatSpecifiers(strpl))
             {
-                this.fmt = fmt;
-                auto fs = countFormatSpecifiers(fmt);
-                assert(fs == 0 || fs == 1, "Too many format specifiers, 1 maximally");
-                hasArg = fs == 1;
+                try
+                    return format(trans.disableAllButLastSpecifier, n);
+                catch(FormatException e)
+                {
+                    debug throw(e);
+                    return strpl;   // Fall back on untranslated message.
+                }
             }
+            else
+                return trans;
         }
     }
     template tr(string singular, string plural = null)
@@ -311,6 +311,73 @@ else // Translation mode.
         while (f.writeUpToNextSpec(nullSink))
             count++;
         return count;
+    }
+    unittest 
+    {
+        assert ("On %2$s I eat %3$s and walk for %1$d hours.".countFormatSpecifiers == 3);
+        assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".countFormatSpecifiers == 1);
+    }
+
+    import std.format : FormatSpec;
+    private immutable(Char)[] disableAllButLastSpecifier(Char)(const Char[] inp) @safe
+    {
+        import std.array : Appender;
+        import std.conv : to;
+        import std.exception : enforce;
+        import std.format : FormatException;
+        import std.algorithm : remove;
+        import std.typecons : tuple;
+
+        enum Mode {undefined, inSequence, outOfSequence}
+        Mode mode = Mode.undefined;
+
+        Appender!(Char[]) outp;
+        outp.reserve(inp.length + 10);
+        // Traverse specs, disable all of them, note where the highest index is. Re-enable that one.
+        size_t lastSpecIndex = 0, highestSpecIndex = 0, highestSpecPos = 0, specs = 0;
+        auto f = FormatSpec!Char(inp);
+        while (f.trailing.length > 0)
+        {
+            if (f.writeUpToNextSpec(outp))
+            {
+                // Mode check.
+                if (mode == Mode.undefined)
+                    mode = f.indexStart > 0 ? Mode.outOfSequence : Mode.inSequence;
+                else
+                    enforce!FormatException( mode == Mode.inSequence && f.indexStart == 0 ||
+                                            (mode == Mode.outOfSequence && f.indexStart != lastSpecIndex),
+                            `Cannot mix specifiers with and without a position argument in "` ~ inp ~ `"`);
+                // Track the highest.
+                if (f.indexStart == 0)
+                    highestSpecPos = outp[].length + 1;
+                else
+                    if (f.indexStart > highestSpecIndex)
+                    {
+                        highestSpecIndex = f.indexStart;
+                        highestSpecPos = outp[].length + 1;
+                    }
+                // disable
+                auto curFmtSpec = inp[outp[].length - specs .. $ - f.trailing.length];
+                outp ~= '%'.to!Char ~ curFmtSpec;
+                lastSpecIndex = f.indexStart;
+                specs++;
+            }
+
+        }
+        return mode == Mode.inSequence ?
+            outp[].remove(highestSpecPos).idup :
+            outp[].remove(tuple(highestSpecPos, highestSpecPos + highestSpecIndex.to!string.length + 2)).idup;
+    }
+    unittest
+    {
+        import std.exception;
+
+        assert ("Last %s, in %s, I ate %d muffins".disableAllButLastSpecifier ==
+                "Last %%s, in %%s, I ate %d muffins");
+        assert ("I ate %3$d muffins on %1$s in %2$s.".disableAllButLastSpecifier ==
+                "I ate %d muffins on %%1$s in %%2$s.");
+        assertThrown("An unpositioned %d specifier mixed with positioned specifier %3$s".disableAllButLastSpecifier);
+        assertThrown("A positioned specifier %3$s mixed with unpositioned %d specifier".disableAllButLastSpecifier);
     }
 }
 

@@ -1,16 +1,16 @@
 ﻿# Gettext
 
-This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction - enabled by D's unique language features - with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to switch between natural languages within the same software distribution. Many commercial translation offices support GNU `gettext` message catalogs (the PO files, for Portable Object), and various editors exist that help with the translation process. The translation process is separated from the programming process, so that they may happen asynchronously and without knowledge of eachother. New translations may be added without recompilation.
+This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction - enabled by D's unique language features - with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to switch between natural languages within the same software distribution. Many commercial translation offices can work with GNU `gettext` message catalogs (the PO files, for Portable Object), and various editors exist that help with the translation process. The translation process is separated from the programming process, so that they may happen asynchronously and without knowledge of eachother. New translations may be added without recompilation.
 
 ## Features
 
 - All marked strings that are seen by the compiler are extracted automatically.
-- Constants, immutables, static initializers and even enums can be marked as translatable (a D specialty).
+- Constants, immutables, static initializers, manifest constants and anonimous enums can be marked as translatable (a D specialty).
+- Plural forms are language dependent.
 - Multiple identical strings are translated once.
-- References to the source location of the original strings are maintained.
+- Code occurrences of strings are communicated to the translator.
 - Available languages are discovered and selected at run-time.
-- Plural forms are supported and language dependent.
-- Platfom independent, no dependencies on C libraries.
+- Platfom independent, not linked with C libraries.
 - Automated generation of the PO template.
 - Automated merging into existing translations (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
 - Automated generation of MO files (Machine Object) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
@@ -59,7 +59,7 @@ mixin(gettext.main);
 
 ### Ignore generated files
 
-The PO template and machine object files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact in the string extraction process. If you use Git, add these lines to `.gitignore`:
+The PO template and machine object files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact of the string extraction process. If you use Git, add these lines to `.gitignore`:
 ```
 .xgettext
 *.pot
@@ -86,7 +86,23 @@ writeln(tr!("one green bottle hanging on the wall",
 ```
 Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular form.
 
-Many languages have not just two forms like the english language does, and translations in those languages can supply all the forms that the particular language requires.
+Many languages have not just two forms like the english language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator.
+
+### Marking format strings
+
+Translatable strings can be format strings, used with `std.format` and `std.stdio.writefln` etc. These format strings do support plural forms, but the argument that determines the form must be supplied to `tr` and not to `format`. The corresponding format specifier will not be seen by `format` as it will have been replaced with a string by `tr`. Example:
+```d
+format(tr!("Welcome %s, you may make a wish",
+           "Welcome %s, you may make %d wishes")(n), name);
+```
+The format specifier that selects the form is the last specifier in the format string (here `%d`). In many sentences, however, the specifier that should select the form cannot be the last. In these cases, format specifiers should be given a position argument, where the highest position determines the form:
+```d
+foreach (where; [tr!"hand", tr!"bush"])
+    format(tr!("One bird in the %1$s", "%2$d birds in the %1$s")(n), where);
+```
+Note: all specifiers need to have a position argument in this case. Again, the specifier with the highest position argument will never be seen by `format`.
+
+On a side note, some translations may need a reordering of words, so translators may need to use position arguments in their translated format strings anyway.
 
 ### Selecting a translation
 
@@ -207,7 +223,7 @@ Each natural language that is going to be supported requires a `.po` file, which
 
 There are various tools to do this, from dedicated stand-alone editors, editor plugins or modes, web applications to command line utilities.
 
-Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. Or you let the AI give it its best effort and translate all messages at once, before reviewing the problematic ones (requires subscription). It supports marking translations that need work and adding notes to translations.
+Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. Or you let the AI give it its best effort and translate all messages at once, before reviewing the problematic ones (requires subscription). It supports marking translations that need work and adding notes.
 
 ## Updating translations manually
 
@@ -215,6 +231,7 @@ Any translations that have fallen behind the template will need to be updated by
 ```shell
 dub run -q gettext:merge -- --popath=po
 ```
+and look for warnings. Warnings will also show if `gettext` detected what it thinks is a mistake. Sadly it sometimes gets it wrong: Weekdays, for example, are capitalized in English but not in many other languages. If a translation string only consists of one word, a weekday, it guesses that it is the start of a sentence and will complain if the translation does not start with a capital letter. Therefore, translatable strings should be full sentences if at all possible.
 
 PO file editors will typically allow translators to quickly jump between strings that need their attention.
 
@@ -222,6 +239,8 @@ After a PO file has been edited, MO files must be regenerated with this command:
 ```shell
 dub run gettext:po2mo -- --popath=po --mopath=mo
 ```
+
+Currently, Dub does not detect changes in PO files only; Either issue the command by hand or `--force` a recompilation of your project.
 
 ## Example
 
@@ -261,6 +280,19 @@ Please select a language:
 ```
 Notice how the translation of "apple" in the last translation changes with three different endings dependent on the number of apples.
 
+# Limitations
+
+Members of *named* enums are not translated. They resolve to the member identifier name instead:
+```d
+enum E {member = tr!"translation"}
+writeln(E.member); // "member"
+```
+But anonimous enums and manifest constants do work:
+```d
+enum {member = tr!"translation"}
+writeln(member); // "translation"
+```
+
 # Credits
 
 The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com), with optimizations by Steven Schveighoffer [[3]](https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com). Reading of MO files was implemented by Roman Chistokhodov.
@@ -272,3 +304,8 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 - Quotes inside WYSIWYG strings.
 - Memoization. Make it optional through Dub configuration.
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
+- Default language selection dependent on system Locale.
+
+# Bugs
+
+- c-format is only added for plural forms.

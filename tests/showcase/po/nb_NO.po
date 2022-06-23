@@ -1,0 +1,73 @@
+# PO Template for showcase.
+# Copyright © 2022, SARC B.V.
+# This file is distributed under the BSL-01 license.
+# Bastiaan Veelo, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-06-23T10:02:33.0282078Z\n"
+"PO-Revision-Date: 2022-06-23 11:59+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: nb_NO\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.1\n"
+
+#: source/app.d:10
+msgid "Saturday"
+msgstr "lørdag"
+
+#: source/app.d:11
+msgid "Sunday"
+msgstr "søndag"
+
+#: source/app.d:17
+msgid "Gothenburg"
+msgstr "Gøteborg"
+
+#: source/app.d:34(main.report)
+#, c-format
+msgid "Last %s, in %s, I ate a muffin."
+msgid_plural "Last %s, in %s, I ate %d muffins."
+msgstr[0] "Siste %s, i %s, spiste jeg en muffins."
+msgstr[1] "Siste %s, i %s, spiste jeg %d muffins."
+
+#: source/app.d:38(main.report)
+#, c-format
+msgid "I ate a muffin in %1$s on %2$s."
+msgid_plural "I ate %3$d muffins in %1$s on %2$s."
+msgstr[0] "Jeg spiste en muffins i %1$s på %2$s."
+msgstr[1] "Jeg spiste %3$d muffins i %1$s på %2$s."
+
+#: source/app.d:45(main)
+msgid "Copenhagen"
+msgstr "København"
+
+#: source/app.d:47(main)
+msgid "Sidney"
+msgstr ""
+
+#: source/app.d:5
+msgid "Monday"
+msgstr "mandag"
+
+#: source/app.d:6
+msgid "Tuesday"
+msgstr "tirsdag"
+
+#: source/app.d:7
+msgid "Wednesday"
+msgstr "onsdag"
+
+#: source/app.d:8
+msgid "Thursday"
+msgstr "torsdag"
+
+#: source/app.d:9
+msgid "Friday"
+msgstr "fredag"
