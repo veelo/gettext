@@ -203,7 +203,7 @@ We'll discuss these in a little more detail below.
 
 ### Creating/updating the PO template automatically
 
-In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we emply D itself to perform this task.
+In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we employ D itself to perform this task.
 
 This is how this works: The `dub run --config=xgettext` line in the  `postBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
 
@@ -364,7 +364,3 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
-
-# Bugs
-
-- `c-format` is only added for plural forms.

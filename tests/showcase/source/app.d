@@ -48,6 +48,9 @@ EOS");
                                               Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
                                                        `of the ship is below the water level.`]);
 
+    // Translation of format strings.
+    auto f = format(tr!"Format the %s", "string");
+
     // Plural form in format strings.
     void report(Event event)
     {

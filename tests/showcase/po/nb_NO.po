@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-24T06:44:30.0205096Z\n"
+"POT-Creation-Date: 2022-06-24T19:24:19.5437483Z\n"
 "PO-Revision-Date: 2022-06-24 08:47+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -78,7 +78,12 @@ msgstr "Kontroller dypgangen."
 msgid "Monday"
 msgstr "mandag"
 
-#: source/app.d:56(main.report)
+#: source/app.d:52(main)
+#, c-format
+msgid "Format the %s"
+msgstr ""
+
+#: source/app.d:59(main.report)
 #, c-format
 msgid "Last %s, in %s, I ate a muffin."
 msgid_plural "Last %s, in %s, I ate %d muffins."
@@ -89,26 +94,26 @@ msgstr[1] "Siste %s, i %s, spiste jeg %d muffins."
 msgid "Tuesday"
 msgstr "tirsdag"
 
-#: source/app.d:60(main.report)
+#: source/app.d:63(main.report)
 #, c-format
 msgid "I ate a muffin in %1$s on %2$s."
 msgid_plural "I ate %3$d muffins in %1$s on %2$s."
 msgstr[0] "Jeg spiste en muffins i %1$s på %2$s."
 msgstr[1] "Jeg spiste %3$d muffins i %1$s på %2$s."
 
-#: source/app.d:67(main)
-msgid "Copenhagen"
-msgstr "København"
-
-#: source/app.d:69(main)
-msgid "Sidney"
-msgstr "Sidney"
-
 #: source/app.d:7
 msgid "Wednesday"
 msgstr "onsdag"
 
-#: source/app.d:73(main) source/app.d:77(main)
+#: source/app.d:70(main)
+msgid "Copenhagen"
+msgstr "København"
+
+#: source/app.d:72(main)
+msgid "Sidney"
+msgstr "Sidney"
+
+#: source/app.d:76(main) source/app.d:80(main)
 msgid "message"
 msgstr "beskjed"
 

@@ -53,7 +53,6 @@ version (xgettext) // String extraction mode.
         return args.length > 0; // Always true, but the compiler has no idea.
     }
 
-
     import std.typecons : Tuple;
     import std.array : join;
     import std.ascii : newline;
@@ -67,7 +66,6 @@ version (xgettext) // String extraction mode.
     private string[][Key] comments;
 
     string potFile;
-
 
     private void writePOT(string potFile) @safe
     {
@@ -222,10 +220,10 @@ version (xgettext) // String extraction mode.
                 }
                 Format format()
                 {
-                    static if (Args.length == 0)
-                        return Format.plain;
-                    else
+                    static if (Args.length > 0 || singular.hasFormatSpecifiers)
                         return Format.c;
+                    else
+                        return Format.plain;
                 }
                 string context()
                 {
@@ -242,6 +240,21 @@ version (xgettext) // String extraction mode.
         {
             return null; // no-op
         }
+    }
+
+    private bool hasFormatSpecifiers(string fmt) pure @safe
+    {
+        import std.format : FormatSpec;
+
+        static void ns(const(char)[] arr) {} // the simplest output range
+        auto nullSink = &ns;
+        return FormatSpec!char(fmt).writeUpToNextSpec(nullSink);
+    }
+    unittest 
+    {
+        assert ("On %2$s I eat %3$s and walk for %1$d hours.".hasFormatSpecifiers);
+        assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".hasFormatSpecifiers);
+        assert (!"On %%2$s I eat %%3$s and walk for hours.".hasFormatSpecifiers);
     }
 }
 else // Translation mode.
