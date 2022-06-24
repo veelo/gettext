@@ -313,6 +313,8 @@ Notice how the translation of "apple" in the last translation changes with three
 
 # Limitations
 
+## Named enums
+
 Members of *named* enums are not translated. They resolve to the member identifier name instead:
 ```d
 enum E {member = tr!"translation"}
@@ -324,6 +326,20 @@ enum {member = tr!"translation"}
 writeln(member); // "translation"
 ```
 
+## Wide strings
+
+Attempts to translate a `wstring` or `dstring` will result in a compilation error:
+```d
+auto w = tr!"Hello"w; // Error: template `gettext.tr` does not match any template declaration
+```
+
+It would be pointless for this package to try and support all string widths. After all, the `hello` literal is assembled as an array of UTF-8 chars, which is then [converted to wstring](https://dlang.org/spec/lex.html#string_postfix). Gettext works internally with UTF-8, so it would need to convert the wstring from UTF-16 back to UTF-8, and after translation convert to UTF-16 again before it returns.
+
+The limitation is easily dealt with by converting the translated string after lookup:
+```d
+auto w = tr!"Hello".to!wstring;
+```
+
 # Credits
 
 The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com), with optimizations by Steven Schveighoffer [[3]](https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com). Reading of MO files was implemented by Roman Chistokhodov.
@@ -333,7 +349,6 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 - Memoization. Make it optional through Dub configuration.
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
-- Wide strings.
 
 # Bugs
 

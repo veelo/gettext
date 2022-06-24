@@ -23,6 +23,7 @@ void main()
     mixin(gettext.main);
     import std.stdio;
     import std.format;
+    import std.conv;
     
     selectLanguage;
 
@@ -67,6 +68,14 @@ EOS");
     Event event;
     event.city = tr!"Sidney";
     report(event);
+
+    void fun(string message) {}
+    fun(tr!"message");
+
+    void funW(wstring message) {}
+    version (none) funW(tr!"wmessage"w); // No go.
+    funW(tr!"message".to!wstring);
+
 }
 
 void selectLanguage()

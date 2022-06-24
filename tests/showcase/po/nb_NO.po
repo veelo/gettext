@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-23T18:17:12.0545392Z\n"
-"PO-Revision-Date: 2022-06-23 20:18+0200\n"
+"POT-Creation-Date: 2022-06-24T06:44:30.0205096Z\n"
+"PO-Revision-Date: 2022-06-24 08:47+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: nb_NO\n"
@@ -30,15 +30,15 @@ msgstr "søndag"
 msgid "Gothenburg"
 msgstr "Gøteborg"
 
-#: source/app.d:29(main)
+#: source/app.d:31(main)
 msgid "\"dependencies\": { \"gettext\": \"*\" }"
 msgstr "\"dependencies\": { \"gettext\": \"*\" }"
 
-#: source/app.d:30(main)
+#: source/app.d:32(main)
 msgid "C:\\Program Files\\gettext-iconv\\bin\\msgfmt.exe"
 msgstr "C:\\Program Files\\gettext-iconv\\bin\\msgfmt.exe"
 
-#: source/app.d:31(main)
+#: source/app.d:33(main)
 msgid ""
 "This\n"
 "is a multi-line\n"
@@ -49,27 +49,27 @@ msgstr ""
 "heredoc string\n"
 
 #. Proper name. Phonetically: ˈwɔltər braɪt
-#: source/app.d:38(main)
+#: source/app.d:40(main)
 msgid "Walter Bright"
 msgstr "Walter Bright"
 
-#: source/app.d:41(main)
+#: source/app.d:43(main)
 msgctxt "Menu|File|Open"
 msgid "Open"
 msgstr "Åpne"
 
-#: source/app.d:42(main)
+#: source/app.d:44(main)
 msgctxt "Menu|File|Printer|Open"
 msgid "Open"
 msgstr "Åpne"
 
-#: source/app.d:44(main)
+#: source/app.d:46(main)
 msgctxt "document"
 msgid "Review the draft."
 msgstr "Gjennomgå utkastet."
 
 #. Nautical term! "Draft" = how deep the bottomof the ship is below the water level.
-#: source/app.d:45(main)
+#: source/app.d:47(main)
 msgctxt "nautical"
 msgid "Review the draft."
 msgstr "Kontroller dypgangen."
@@ -78,35 +78,39 @@ msgstr "Kontroller dypgangen."
 msgid "Monday"
 msgstr "mandag"
 
-#: source/app.d:54(main.report)
+#: source/app.d:56(main.report)
 #, c-format
 msgid "Last %s, in %s, I ate a muffin."
 msgid_plural "Last %s, in %s, I ate %d muffins."
 msgstr[0] "Siste %s, i %s, spiste jeg en muffins."
 msgstr[1] "Siste %s, i %s, spiste jeg %d muffins."
 
-#: source/app.d:58(main.report)
+#: source/app.d:6
+msgid "Tuesday"
+msgstr "tirsdag"
+
+#: source/app.d:60(main.report)
 #, c-format
 msgid "I ate a muffin in %1$s on %2$s."
 msgid_plural "I ate %3$d muffins in %1$s on %2$s."
 msgstr[0] "Jeg spiste en muffins i %1$s på %2$s."
 msgstr[1] "Jeg spiste %3$d muffins i %1$s på %2$s."
 
-#: source/app.d:6
-msgid "Tuesday"
-msgstr "tirsdag"
-
-#: source/app.d:65(main)
+#: source/app.d:67(main)
 msgid "Copenhagen"
 msgstr "København"
 
-#: source/app.d:67(main)
+#: source/app.d:69(main)
 msgid "Sidney"
 msgstr "Sidney"
 
 #: source/app.d:7
 msgid "Wednesday"
 msgstr "onsdag"
+
+#: source/app.d:73(main) source/app.d:77(main)
+msgid "message"
+msgstr "beskjed"
 
 #: source/app.d:8
 msgid "Thursday"

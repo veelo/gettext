@@ -246,6 +246,7 @@ version (xgettext) // String extraction mode.
 }
 else // Translation mode.
 {
+    import std.format : format, FormatException, FormatSpec;
     version (docs) {
         /**
         Translate `message`.
@@ -310,7 +311,6 @@ else // Translation mode.
         }
         string opCall(size_t number) const
         {
-            import std.format;
             import std.algorithm : max;
 
             const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
@@ -340,8 +340,6 @@ else // Translation mode.
 
     private int countFormatSpecifiers(string fmt) pure @safe
     {
-        import std.format : FormatSpec;
-
         static void ns(const(char)[] arr) {} // the simplest output range
         auto nullSink = &ns;
         int count = 0;
@@ -356,13 +354,11 @@ else // Translation mode.
         assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".countFormatSpecifiers == 1);
     }
 
-    import std.format : FormatSpec;
     private immutable(Char)[] disableAllButLastSpecifier(Char)(const Char[] inp) @safe
     {
         import std.array : Appender;
         import std.conv : to;
         import std.exception : enforce;
-        import std.format : FormatException;
         import std.algorithm : remove;
         import std.typecons : tuple;
 
