@@ -359,7 +359,6 @@ else // Translation mode.
         import std.array : Appender;
         import std.conv : to;
         import std.exception : enforce;
-        import std.algorithm : remove;
         import std.typecons : tuple;
 
         enum Mode {undefined, inSequence, outOfSequence}
@@ -399,13 +398,15 @@ else // Translation mode.
 
         }
         return mode == Mode.inSequence ?
-            outp[].remove(highestSpecPos).idup :
-            outp[].remove(tuple(highestSpecPos, highestSpecPos + highestSpecIndex.to!string.length + 2)).idup;
+            (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + 1 .. $]).idup :
+            (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + highestSpecIndex.to!string.length + 2 .. $]).idup;
     }
     unittest
     {
         import std.exception;
 
+        assert ("Я считаю %d яблоко.".disableAllButLastSpecifier ==
+                "Я считаю %d яблоко.");
         assert ("Last %s, in %s, I ate %d muffins".disableAllButLastSpecifier ==
                 "Last %%s, in %%s, I ate %d muffins");
         assert ("I ate %3$d muffins on %1$s in %2$s.".disableAllButLastSpecifier ==
@@ -479,7 +480,7 @@ string languageCode(string moFile) @safe
 {
     import std.string : lineSplitter;
     import std.algorithm : filter, startsWith;
-    return MoFile(moFile).gettext("").lineSplitter.filter!(a => a.startsWith("Language: ")).front["Language: ".length .. $];
+    return MoFile(moFile).header.lineSplitter.filter!(a => a.startsWith("Language: ")).front["Language: ".length .. $];
 }
 
 /**

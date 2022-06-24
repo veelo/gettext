@@ -18,14 +18,14 @@ struct Event
     int muffins = 1;
 }
 
-void main()
+void main(string[] args)
 {
     mixin(gettext.main);
     import std.stdio;
     import std.format;
     import std.conv;
     
-    selectLanguage;
+    selectLanguage(args);
 
     // All current and future string formats are recognised.
     auto json = tr!(`"dependencies": { "gettext": "*" }`);
@@ -78,17 +78,22 @@ EOS");
 
 }
 
-void selectLanguage()
+void selectLanguage(string[] args)
 {
-    import gettext, std.stdio;
+    import std.stdio, std.conv;
 
-    string[] languages = availableLanguages;
-    writeln("Please select a language:");
-    writeln("[0] default");
-    foreach (i, language; languages)
-        writeln("[", i + 1, "] ", language.languageCode);
     int choice = -1;
-    readf(" %d", &choice);
+    string[] languages = availableLanguages;
+    if (args.length > 1)
+        choice = args[1].to!int;
+    else
+    {
+        writeln("Please select a language:");
+        writeln("[0] default");
+        foreach (i, language; languages)
+            writeln("[", i + 1, "] ", language.languageCode);
+        readf(" %d", &choice);
+    }
     if (choice < 1 || choice > languages.length)
         gettext.selectLanguage(null);
     else

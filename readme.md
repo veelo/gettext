@@ -1,9 +1,14 @@
 ﻿# Gettext
 
-This Dub package provides internationalization functionality that is compatible with the [GNU `gettext` utilities](https://www.gnu.org/software/gettext/). It combines convenient and reliable string extraction - enabled by D's unique language features - with existing well established utilities for translation into other natural languages. The resulting translation tables are loaded at run-time, allowing users to switch between natural languages within the same software distribution. Many commercial translation offices can work with GNU `gettext` message catalogs (the PO files, for Portable Object), and various editors exist that help with the translation process. The translation process is separated from the programming process, so that they may happen asynchronously and without knowledge of eachother. New translations may be added without recompilation.
+The [GNU `gettext` utilities](https://www.gnu.org/software/gettext/) provide a well established solution for the internationalization of software. It allows users to switch between natural languages without switching executables. Many commercial translation offices can work with GNU `gettext` message catalogs (Portable Object files, PO), and various editors exist that help with the translation process. The translation process and programming process can happen asynchronously and without knowledge of eachother. New translations can be added without recompilation.
+
+The use of GNU `gettext` in D has been enabled by the [mofile](https://code.dlang.org/packages/mofile) package, that this Gettext package builds on. If you use `mofile` directly then you depend on GNU `xgettext` for the task of string extraction, hoping it can parse D code as if it were C code.
+
+This Gettext package removes the need for an external parser and provides a more powerful interface than GNU `gettext` itself. It combines convenient and reliable string extraction - enabled by D's unique language features - and a comprehensive integration with Dub, leveraging a well established ecosystem for translation into other natural languages.
 
 ## Features
 
+- Concise translation markers that can be aliased to your preference.
 - All marked strings that are seen by the compiler are extracted automatically.
 - All (current and future) [D string literal formats](https://dlang.org/spec/lex.html#string_literals) are supported.
 - Constants, immutables, static initializers, manifest constants and anonimous enums can be marked as translatable (a D specialty).
@@ -15,7 +20,7 @@ This Dub package provides internationalization functionality that is compatible 
 - Platfom independent, not linked with C libraries.
 - Automated generation of the PO template.
 - Automated merging into existing translations (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
-- Automated generation of MO files (Machine Object) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
+- Automated generation of Machine Object files (MO) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
 - Includes utility for listing unmarked strings in the project.
 
 ## Installation
@@ -61,7 +66,7 @@ mixin(gettext.main);
 
 ### Ignore generated files
 
-The PO template and machine object files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact of the string extraction process. If you use Git, add these lines to `.gitignore`:
+The PO template and MO files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact of the string extraction process. If you use Git, add these lines to `.gitignore`:
 ```
 .xgettext
 *.pot
@@ -90,6 +95,12 @@ Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular
 
 Many languages have not just two forms like the English language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator.
 
+If `tr` is too verbose for you, you can change it to whatever you want:
+```d
+import gettext : _ = tr;
+writeln(_!"No green bottles...");
+```
+
 ### Marking format strings
 
 Translatable strings can be format strings, used with `std.format` and `std.stdio.writefln` etc. These format strings do support plural forms, but the argument that determines the form must be supplied to `tr` and not to `format`. The corresponding format specifier will not be seen by `format` as it will have been replaced with a string by `tr`. Example:
@@ -97,18 +108,18 @@ Translatable strings can be format strings, used with `std.format` and `std.stdi
 format(tr!("Welcome %s, you may make a wish",
            "Welcome %s, you may make %d wishes")(n), name);
 ```
-The format specifier that selects the form is the last specifier in the format string (here `%d`). In many sentences, however, the specifier that should select the form cannot be the last. In these cases, format specifiers should be given a position argument, where the highest position determines the form:
+The format specifier that selects the form is the last specifier in the format string (here `%d`). In many sentences, however, the specifier that should select the form cannot be the last. In these cases, format specifiers must be given a position argument, where the highest position determines the form:
 ```d
-foreach (where; [tr!"hand", tr!"bush"])
-    format(tr!("One bird in the %1$s", "%2$d birds in the %1$s")(n), where);
+foreach (i, where; [tr!"hand", tr!"bush"])
+    format(tr!("One bird in the %1$s", "%2$d birds in the %1$s")(i + 1), where);
 ```
-Note: all specifiers need to have a position argument in this case. Again, the specifier with the highest position argument will never be seen by `format`.
+Again, the specifier with the highest position argument will never be seen by `format`. On a side note, some translations may need a reordering of words, so translators may need to use position arguments in their translated format strings anyway.
 
-On a side note, some translations may need a reordering of words, so translators may need to use position arguments in their translated format strings anyway.
+Note: Specifiers with and without a position argument must not be mixed. 
 
 ### Passing attributes
 
-Optionally, two kinds of attributes can be passed to `tr`, in the form of an associative array initializer. These are for passing notes to the translator and for disambiguating identical sentences with different meaning.
+Optionally, two kinds of attributes can be passed to `tr`, in the form of an associative array initializer. These are for passing notes to the translator and for disambiguating identical sentences with different meanings.
 
 #### Passing notes to the translator
 
@@ -172,7 +183,13 @@ const statically_initialized = tr!"Compile-time translation!";
 
 The correct translation will then be retrieved at the places where this constant is used, at run-time.
 
-The way this works is that the type of the constant gets to be inferred as `TranslatableString`, a private struct inside the implementation of this package. Whenever an instance of this struct is evaluated, the value of the translation is retrieved.
+The way this works is that the type of the constant gets to be inferred as `TranslatableString`, a private callable struct inside the implementation of this package. Whenever an instance of this struct is evaluated, the value of the translation is retrieved.
+
+### Impact on footprint and performance
+
+The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the one or two references to the strings that were passed in.
+
+There is a cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on translatable strings inside a loop. 
 
 ## Added steps to the build process
 
@@ -208,7 +225,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-19T17:02:56.6502103Z\n"
+"POT-Creation-Date: 2022-06-24T14:22:55.3248589Z\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -217,13 +234,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: source/mod1.d:11(fun1)
-#, c-format
-msgid "Hello! My name is %s."
+#: source/mod1.d:13(fun1) source/mod2.d:15(fun3)
+msgid "Identical strings share their translation!"
 msgstr ""
 
-#: source/mod1.d:12(fun1) source/mod2.d:15(fun3)
-msgid "Identical strings share their translation!"
+#: source/mod1.d:7
+msgid "Hello! My name is %s."
 msgstr ""
 
 #: source/mod2.d:13(fun3)
@@ -282,7 +298,7 @@ Please select a language:
 [0] default
 [1] en_GB
 [2] nl_NL
-[3] ru_RU
+[3] uk_UA
 1
 Hello! My name is Joe.
 I'm counting one apple.
@@ -298,16 +314,16 @@ Please select a language:
 [0] default
 [1] en_GB
 [2] nl_NL
-[3] ru_RU
+[3] uk_UA
 3
-Привет! Меня зовут Joe.
-Я считаю 1 яблоко.
-Привет! Меня зовут Schmoe.
-Я считаю 3 яблока.
-Привет! Меня зовут Jane.
-Я считаю 5 яблок.
-Привет! Меня зовут Doe.
-Я считаю 7 яблок.
+Привіт! Мене звати Joe.
+Я рахую 1 яблуко.
+Привіт! Мене звати Schmoe.
+Я рахую 3 яблука.
+Привіт! Мене звати Jane.
+Я рахую 5 яблук.
+Привіт! Мене звати Doe.
+Я рахую 7 яблук.
 ```
 Notice how the translation of "apple" in the last translation changes with three different endings dependent on the number of apples.
 
@@ -346,7 +362,6 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 
 # TODO
 
-- Memoization. Make it optional through Dub configuration.
 - Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
 
