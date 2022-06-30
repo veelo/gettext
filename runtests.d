@@ -27,14 +27,20 @@ int runCommand(string[] command, string workDir = null)
 
 int runTest(string workDir)
 {
+    auto result = runCommand(["dub", "build"], workDir);
+    if (result != 0)
+        return result;
+
+    // Check for translatable strings in .pot file.
+    foreach (potFile; dirEntries(buildPath(workDir, "po"), "*pot", SpanMode.shallow))
+        assert (potFile.readText.lineSplitter.count!(a => a.startsWith("msgid")) > 1,
+                "No translatable strings were extracted.");
+
     foreach(lang; 0.. dirEntries(buildPath(workDir, "mo"), "*.mo", SpanMode.shallow).walkLength + 1)
     {
-        auto command = ["dub", "run", "--", lang.to!string];
-        writeln((workDir.length > 0 ? "cd " ~ workDir ~ " && " : ""), command.join(" "));
-        auto result = execute(command, null, Config.none, size_t.max, workDir);
-        writeln(result.output);
-        if (result.status != 0)
-            return result.status;
+        result = runCommand(["dub", "run", "--", lang.to!string], workDir);
+        if (result != 0)
+            return result;
     }
     return 0;
 }
