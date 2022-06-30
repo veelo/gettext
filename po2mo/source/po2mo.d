@@ -33,16 +33,16 @@ int main(string[] args) {
         return Return.error;
     }
 
+    if (!moPath.exists)
+        mkdirRecurse(moPath);
+
     auto poFiles = dirEntries(poPath, "*.po", SpanMode.shallow);
     if (poFiles.empty)
     {
-        writeln("Error: No \".po\" files found at \"", poPath, "\".\n",
-                "       Please supply their path with the \"--popath\" option.");
-        return Return.error;
+        writeln("Warning: No \".po\" files found at \"", poPath, "\".\n",
+                "         Make sure to supply their path with the \"--popath\" option.");
+        return Return.success;
     }
-
-    if (!moPath.exists)
-        mkdirRecurse(moPath);
 
     Pid[] pids;
     foreach (poFile; poFiles)
