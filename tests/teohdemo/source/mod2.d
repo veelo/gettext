@@ -1,7 +1,7 @@
 module mod2;
 
 import std.stdio;
-import gettext : _ = tr;    // Customary in GNU software.
+import gettext : _ = tr;    // Customary in GNU software by macro substitution.
 
 void fun2(int num)
 {

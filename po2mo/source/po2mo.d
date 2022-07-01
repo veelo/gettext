@@ -4,6 +4,7 @@ import std.getopt;
 import std.path;
 import std.process;
 import std.stdio;
+import colorize;
 
 int main(string[] args) {
     string poPath, moPath, gettextPath;
@@ -28,7 +29,7 @@ int main(string[] args) {
     try execute(msgfmt);
     catch(ProcessException)
     {
-        writeln("Error: Could not find the \"msgfmt\" utility.\n",
+        cwriteln("ERROR: ".color("red"), "Could not find the \"msgfmt\" utility.\n",
                 "       Please supply its path with the \"--gettextpath\" option.");
         return Return.error;
     }
@@ -39,7 +40,7 @@ int main(string[] args) {
     auto poFiles = dirEntries(poPath, "*.po", SpanMode.shallow);
     if (poFiles.empty)
     {
-        writeln("Warning: No \".po\" files found at \"", poPath, "\".\n",
+        cwriteln("WARNING: ".color("yellow"), "No \".po\" files found at \"", poPath, "\".\n",
                 "         Make sure to supply their path with the \"--popath\" option.");
         return Return.success;
     }

@@ -11,12 +11,29 @@ enum {
     sunday    = tr!"Sunday",
 }
 
+enum Color {red, green, blue}
+
+// Static array
+immutable TranslatableString[3] colors1 = [tr!"Red",
+                                           tr!"Green",
+                                           tr!"Blue"];
+immutable typeof(tr!"Red")[Color.max + 1] colors2 = [Color.red:   tr!"Red",
+                                                     Color.green: tr!"Green",
+                                                     Color.blue:  tr!"Blue"];
+
+// Dynamic array
+immutable clrs = [tr!"Red",
+                  tr!"Green",
+                  tr!"Blue"];
+
 struct Event
 {
     auto day = monday;
-    auto city = tr!"Gothenburg"; // Marked in static initializer.
+    auto city = tr!"Gothenburg"; // Marked static initializer.
     int muffins = 1;
 }
+
+private const one = tr!"One ";
 
 void main(string[] args)
 {
@@ -28,13 +45,32 @@ void main(string[] args)
     selectLanguage(args);
 
     // All current and future string formats are recognised.
-    auto json = tr!(`"dependencies": { "gettext": "*" }`);
-    auto path = tr!(r"C:\Program Files\gettext-iconv\bin\msgfmt.exe");
-    auto delimited = tr!(q"EOS
+    static const json = tr!(`"dependencies": { "gettext": "*" }`);
+    static const path = tr!(r"C:\Program Files\gettext-iconv\bin\msgfmt.exe");
+    static const delimited = tr!(q"EOS
 This
 is a multi-line
 heredoc string
 EOS");
+
+    // Concatenation
+    static const tr_and_tr = tr!"One " ~ tr!"sentence.";
+    assert (tr_and_tr.toString ==     tr!"One sentence.".toString);
+    static const tr_and_string = tr!"One " ~ "sentence.";
+    assert (tr_and_string.toString == tr!"One sentence.".toString);
+    static const tr_and_char = tr!"One sentence" ~ '.';
+    assert (tr_and_char.toString ==   tr!"One sentence.".toString);
+    static const string_and_tr = "One " ~ tr!"sentence.";
+    assert (string_and_tr.toString == tr!"One sentence.".toString);
+    static const tr_sequence = tr!"One" ~ " " ~ tr!"sentence" ~ '.';
+    assert (tr_sequence.toString ==   tr!"One sentence.".toString);
+    static const sentence = "sentence";
+    static const even = "even";
+    static const mix = tr!"One " ~ sentence ~ ".";
+    static const longer = tr!"One " ~ even ~ tr!" longer " ~ sentence ~ ".";
+    static const global_const = one ~ tr!"sentence.";
+
+    immutable onez = tr!"One" ~ '\0';
 
     // Pass a note to the translator.
     auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
@@ -45,8 +81,10 @@ EOS");
 
     auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
     auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
-                                              Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
+                                              Tr.note: `Nautical term! "Draft" = how deep the bottom ` ~
                                                        `of the ship is below the water level.`]);
+    writeln(message1); // Work in progress.
+    writeln(message2); // Work in progress.
 
     // Translation of format strings.
     auto f = format(tr!"Format the %s", "string");

@@ -2,18 +2,20 @@
 
 The [GNU `gettext` utilities](https://www.gnu.org/software/gettext/) provide a well established solution for the internationalization of software. It allows users to switch between natural languages without switching executables. Many commercial translation offices can work with GNU `gettext` message catalogs (Portable Object files, PO), and various editors exist that help with the translation process. The translation process and programming process can happen asynchronously and without knowledge of eachother. New translations can be added without recompilation.
 
-The use of GNU `gettext` in D has been enabled by the [mofile](https://code.dlang.org/packages/mofile) package, that this Gettext package builds on. If you use `mofile` directly then you depend on GNU `xgettext` for the task of string extraction, hoping it can parse D code as if it were C code.
+The use of GNU `gettext` in D has been enabled by the [mofile](https://code.dlang.org/packages/mofile) package, that this Gettext package builds on. If you would only use `mofile` directly then you would depend on the GNU `xgettext` utility for the task of string extraction, hoping it can parse D code as if it were C code. You would also be dealing with a number of limitations that are native to GNU `gettext`.
 
-This Gettext package removes the need for an external parser and provides a more powerful interface than GNU `gettext` itself. It combines convenient and reliable string extraction - enabled by D's unique language features - and a comprehensive integration with Dub, leveraging a well established ecosystem for translation into other natural languages.
+This Gettext package removes the need for an external parser and provides a more powerful interface than GNU `gettext` itself. It combines convenient and reliable string extraction - enabled by D's unique language features - and a comprehensive integration with Dub, while leveraging a well established ecosystem for translation into other natural languages.
 
 ## Features
 
 - Concise translation markers that can be aliased to your preference.
 - All marked strings that are seen by the compiler are extracted automatically.
 - All (current and future) [D string literal formats](https://dlang.org/spec/lex.html#string_literals) are supported.
-- Constants, immutables, static initializers, manifest constants and anonimous enums can be marked as translatable (a D specialty).
+- Static initializers of fields, constants, immutables, manifest constants and anonimous enums can be marked as translatable (a D specialty).
+- Concatenations of translatable strings, untranslated strings and single chars are supported, even in initializers.
+- Arrays of translatable strings are supported, also when statically initialized.
 - Plural forms are language dependent.
-- Multiple identical strings are translated once, unless they are given different contexts.
+- Multiple identical strings are translated once<!--, unless they are given different contexts WIP-->.
 - Notes to the translator can be attached to individual translatable strings.
 - Code occurrences of strings are communicated to the translator.
 - Available languages are discovered and selected at run-time.
@@ -36,7 +38,7 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
     "configurations": [
         {
             "name": "default",
-            "postBuildCommands": [
+            "preBuildCommands": [
                 "dub run --config=xgettext",
                 "dub run gettext:merge -- --popath=po --backup=none",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"
@@ -115,7 +117,18 @@ foreach (i, where; [tr!"hand", tr!"bush"])
 ```
 Again, the specifier with the highest position argument will never be seen by `format`. On a side note, some translations may need a reordering of words, so translators may need to use position arguments in their translated format strings anyway.
 
-Note: Specifiers with and without a position argument must not be mixed. 
+Note: Specifiers with and without a position argument must not be mixed.
+
+### Concatenations
+
+Translators will be able to produce the best translations if they get to work with full sentences, like
+```d
+auto message = format(tr!`Could not open the file "%s" for reading.`, file);
+```
+However, in support of legacy code, concatenations of strings do work:
+```d
+auto message = tr!`Could not open the file "` ~ file ~ tr!`" for reading.`;
+```
 
 ### Passing attributes
 
@@ -130,12 +143,12 @@ auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltə
 
 The GNU `gettext` manual has a section [about the translation of proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
 
-#### Disambiguate identical sentences
+#### Disambiguate identical sentences (w.i.p.)
 
 Multiple occurrences of the same sentence are combined into one translation by default. In some cases, that may not work well. Some language, for example, may need to translate identical menu items in different menus differently. These can be disambiguated by adding a context like so:
 ```d
-auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File|Open"]);
-auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer|Open"]);
+auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File"]);
+auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer"]);
 ```
 
 Notes and comments can be combined in any order:
@@ -146,11 +159,14 @@ auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
                                                    `of the ship is below the water level.`]);
 ```
 
+**Work in progress:** Mofile currently does not yet retrieve strings that have a context set.
+
 ### Selecting a translation
 
 Use the following functions to discover translation tables, get the language code for a table and activate a translation:
 ```d
 string[] availableLanguages(string moPath = null)
+string languageCode() @safe
 string languageCode(string moFile) @safe
 void selectLanguage(string moFile) @safe
 ```
@@ -176,20 +192,22 @@ d:\SARC\gettext\source\gettext.d(285,20): Error: static variable `currentLanguag
 source\mod1.d(7,24):        called from here: `TranslatableString("Compile-time translation?").gettext()`
 ```
 
-The solution is to remove the explicit `string` type and let the type of the constant be inferred:
+Unless you're initializing a mutable static variable, the solution is to remove the explicit `string` type and let the type be inferred:
 ```d
 const statically_initialized = tr!"Compile-time translation!";
 ```
 
 The correct translation will then be retrieved at the places where this constant is used, at run-time.
 
-The way this works is that the type of the constant gets to be inferred as `TranslatableString`, a private callable struct inside the implementation of this package. Whenever an instance of this struct is evaluated, the value of the translation is retrieved.
+The way this works is that the type of the constant gets to be inferred as `TranslatableString`, which is a callable struct defined by this package. Whenever an instance of this struct is evaluated, the value of the translation is retrieved.
+
+But, there are places where you wouldn't want to change the type away from `string`, like the initializer of a mutable static variable or an aggregate member. In these cases there is no other way than to move to run-time assignment until after the language has been selected.
 
 ### Impact on footprint and performance
 
-The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the one or two references to the strings that were passed in.
+The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
 
-There is a cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on translatable strings inside a loop. 
+There is a cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on the evaluations in an event loop. 
 
 ## Added steps to the build process
 
@@ -205,7 +223,7 @@ We'll discuss these in a little more detail below.
 
 In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we employ D itself to perform this task.
 
-This is how this works: The `dub run --config=xgettext` line in the  `postBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
+This is how this works: The `dub run --config=xgettext` line in the  `preBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
 
 By default this creates (or overwrites) the PO template in the `po` folder of your project. This can be changed by using options; To see which options are accepted, run the command with the `--help` option:
 ```shell
@@ -256,13 +274,13 @@ msgstr[1] ""
 
 ### Updating existing translations automatically
 
-The `"dub run gettext:merge -- --popath=po"` post-build command invokes the `merge` script that is included as a subpackage. This script runs the `msgmerge` utility from GNU `gettext` on the PO files that it finds. When needed, the path to `msgmerge` can be specified with the `--gettextpath` option. Any additional options are passed on to `msgmerge` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html). For example, you can use the `--backup=numbered` option to keep backups of original translations.
+The `"dub run gettext:merge -- --popath=po"` pre-build command invokes the `merge` script that is included as a subpackage. This script runs the `msgmerge` utility from GNU `gettext` on the PO files that it finds. When needed, the path to `msgmerge` can be specified with the `--gettextpath` option. Any additional options are passed on to `msgmerge` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html). For example, you can use the `--backup=numbered` option to keep backups of original translations.
 
 Note that if translatable strings were changed in the source, or new ones were added, the PO file is now incomplete. This is detected by the script, which then prints a warning. Changed strings are marked as `#, fuzzy` in the PO file, which can be picked up by editors as needing work. If a lookup in an outdated MO file does not succeed, the application will show the string as it occurs in the source.
 
 ### Converting to binary form automatically
 
-Similar to the previous step, the `"dub run gettext:po2mo -- --popath=po --mopath=mo"` post-build command invokes the `po2mo` subpackage, which runs the `msgfmt` utility from GNU `gettext`. This converts all PO files into MO files in the `mo` folder. This folder is then copied to the target directory for inclusion in the distribution of your package. Any additional options are passed on to `msgfmt` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgfmt-Invocation.html).
+Similar to the previous step, the `"dub run gettext:po2mo -- --popath=po --mopath=mo"` pret-build command invokes the `po2mo` subpackage, which runs the `msgfmt` utility from GNU `gettext`. This converts all PO files into MO files in the `mo` folder. This folder is then copied to the target directory for inclusion in the distribution of your package. Any additional options are passed on to `msgfmt` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgfmt-Invocation.html).
 
 ## Adding translations
 
@@ -292,7 +310,7 @@ Currently, Dub does not detect changes in PO files only; Either issue the comman
 ## Example
 
 These are some runs of the included `teohdemo` test:
-```shell
+```
 d:\SARC\gettext\tests\teohdemo>dub run -q
 Please select a language:
 [0] default
@@ -329,19 +347,6 @@ Notice how the translation of "apple" in the last translation changes with three
 
 # Limitations
 
-## Named enums
-
-Members of *named* enums are not translated. They resolve to the member identifier name instead:
-```d
-enum E {member = tr!"translation"}
-writeln(E.member); // "member"
-```
-But anonimous enums and manifest constants do work:
-```d
-enum {member = tr!"translation"}
-writeln(member); // "translation"
-```
-
 ## Wide strings
 
 Attempts to translate a `wstring` or `dstring` will result in a compilation error:
@@ -349,18 +354,46 @@ Attempts to translate a `wstring` or `dstring` will result in a compilation erro
 auto w = tr!"Hello"w; // Error: template `gettext.tr` does not match any template declaration
 ```
 
-It would be pointless for this package to try and support all string widths. After all, the `hello` literal is assembled as an array of UTF-8 chars, which is then [converted to wstring](https://dlang.org/spec/lex.html#string_postfix). Gettext works internally with UTF-8, so it would need to convert the wstring from UTF-16 back to UTF-8, and after translation convert to UTF-16 again before it returns.
+It would be pointless for this package to try and support all string widths. After all, the `hello` literal above is assembled as an array of UTF-8 chars, which is then [converted to wstring](https://dlang.org/spec/lex.html#string_postfix). GNU `gettext` works internally with UTF-8, so it would need to convert the wstring from UTF-16 back to UTF-8, and after translation convert to UTF-16 again before it returns.
 
-The limitation is easily dealt with by converting the translated string after lookup:
+This limitation is easily dealt with by converting the translated string after lookup:
 ```d
 auto w = tr!"Hello".to!wstring;
 ```
 
+## Forced string evaluation
+
+In some cases it may be necessary to forcefully evaluate a translatable string as a string instead of a `TranslatableString` instance:
+```d
+static const tr_and_tr = tr!"One " ~ tr!"sentence.";
+assert (tr_and_tr.toString == tr!"One sentence.".toString); // Fails without `.toString`.
+```
+
+## Named enums
+
+Members of *named* enums need forced string evaluation, otherwise they resolve to the member identifier name instead:
+```d
+enum E {member = tr!"translation"}
+writeln(E.member);          // "member"
+writeln(E.member.toString); // "translation"
+```
+Contrary, anonimous enums and manifest constants do not require this treatment:
+```d
+enum {member = tr!"translation"}
+writeln(member); // "translation"
+```
+
 # Credits
 
-The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com), with optimizations by Steven Schveighoffer [[3]](https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com). Reading of MO files was implemented by Roman Chistokhodov.
+This package was sponsored by SARC B.V. 
+The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum.dlang.org/post/mailman.2526.1585832475.31109.digitalmars-d@puremagic.com), [[2]](https://forum.dlang.org/post/mailman.4770.1596218284.31109.digitalmars-d-announce@puremagic.com), with optimizations by Steven Schveighoffer [[3]](https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com). Reading of MO files was implemented by Roman Chistokhodov [[4]](https://code.dlang.org/packages/mofile).
 
 # TODO
 
-- Domains [[1]](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
+Investigate the merit of:
+- [Domains](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
+
+# Bugs
+
+Mofile doesn't support retrieving strings with contexts yet.

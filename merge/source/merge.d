@@ -32,32 +32,32 @@ int main(string[] args) {
     try execute(msgmerge);
     catch(ProcessException)
     {
-        writeln("Error: Could not find the \"msgmerge\" utility.\n",
-                "       Please supply its path with the \"--gettextpath\" option.");
+        cwriteln("ERROR: ".color("red"), "Could not find the \"msgmerge\" utility.\n",
+                 "       Please supply its path with the \"--gettextpath\" option.");
         return Return.error;
     }
 
     auto poFiles = dirEntries(poPath, "*.po", SpanMode.shallow);
     if (poFiles.empty)
     {
-        writeln("Warning: No \".po\" files found at \"", poPath, "\", nothing to merge\n",
-                "         Make sure to supply their path with the \"--popath\" option.");
+        cwriteln("WARNING: ".color("yellow"), "No \".po\" files found at \"", poPath, "\", nothing to merge\n",
+                 "         Make sure to supply their path with the \"--popath\" option.");
         return Return.success;
     }
 
     auto potFiles = dirEntries(poPath, "*.pot", SpanMode.shallow);
     if (potFiles.empty)
     {
-        writeln("Warning: No \".pot\" file found at \"", poPath, "\", nothing to merge\n",
-                "         Make sure to supply its path with the \"--popath\" option.");
+        cwriteln("WARNING: ".color("yellow"), "No \".pot\" file found at \"", poPath, "\", nothing to merge\n",
+                 "         Make sure to supply its path with the \"--popath\" option.");
         return Return.success;
     }
-    if (potFiles.walkLength > 1)
+    auto potFile = potFiles.front.name;
+    if (!potFiles.dropOne.empty)
     {
-        writeln("Error: Multiple \".pot\" files found at \"", poPath, "\", cannot choose.");
+        cwriteln("ERROR: ".color("red"), "Multiple \".pot\" files found at \"", poPath, "\", cannot choose.");
         return Return.error;
     }
-    auto potFile = potFiles.front;
 
     foreach (poFile; poFiles)
     {

@@ -6,5 +6,8 @@
     "copyright": "Copyright © 2022, SARC B.V.",
     "description": "Batch execution of gettext msgfmt.",
     "license": "BSL-1.0",
-    "targetType": "executable"
+    "targetType": "executable",
+    "dependencies": {
+        "colorize": "~>1.0.5"
+    }
 }

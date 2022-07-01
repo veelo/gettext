@@ -3,10 +3,11 @@ import mod1, mod2;
 
 void main(string[] args)
 {
-    import gettext;
+    import gettext, std.stdio : writefln;
     mixin(gettext.main);
 
     selectLanguage(args);
+    writefln(tr!"Selected language: %s", languageCode);
     foreach (i, name; ["Joe", "Schmoe", "Jane", "Doe"])
     {
         fun1(name);

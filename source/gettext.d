@@ -74,30 +74,27 @@ version (xgettext) // String extraction mode.
         import std.path : baseName, dirName;
         import std.stdio;
 
-        string header()
+        string header() @safe
         {
             import std.exception : ifThrown;
 
             import std.array : join;
 
-            import std.json;
-            import std.process;
+            import std.json, std.process;
 
             string rootPackage = potFile.baseName;
 
             JSONValue json;
-            auto dubResult = execute(["dub", "describe"]);
-            if (dubResult.status == 0)
-            {
-                json = dubResult.output.parseJSON;
-                rootPackage = json["rootPackage"].str.ifThrown!JSONException(potFile.baseName);
-                foreach (_package; json["packages"].arrayNoRef)
-                    if (_package["name"].str == rootPackage)
-                    {
-                        json = _package;
-                        break;
-                    }
-            }
+            auto piped = pipeProcess(["dub", "describe"], Redirect.stdout);
+            scope (exit) piped.pid.wait;
+            json = ()@trusted{ return piped.stdout.byLine.join.parseJSON; }();
+            rootPackage = json["rootPackage"].str.ifThrown!JSONException(potFile.baseName);
+            foreach (_package; json["packages"].arrayNoRef)
+                if (_package["name"].str == rootPackage)
+                {
+                    json = _package;
+                    break;
+                }
 
             string thisYear()
             {
@@ -220,7 +217,7 @@ version (xgettext) // String extraction mode.
                 }
                 Format format()
                 {
-                    static if (Args.length > 0 || singular.hasFormatSpecifiers)
+                    static if (Args.length > 0 || singular.hasFormatSpecifiers || (plural && plural.hasFormatSpecifiers))
                         return Format.c;
                     else
                         return Format.plain;
@@ -236,10 +233,10 @@ version (xgettext) // String extraction mode.
                    comments.require(Key(singular, plural, format, context)) ~= *c;
             }
         }
-        string tr(Args args)
-        {
-            return null; // no-op
-        }
+        static if (plural == null)
+            enum tr = TranslatableString(singular);
+        else
+            enum tr = TranslatableStringPlural(singular, plural);
     }
 
     private bool hasFormatSpecifiers(string fmt) pure @safe
@@ -259,89 +256,6 @@ version (xgettext) // String extraction mode.
 }
 else // Translation mode.
 {
-    import std.format : format, FormatException, FormatSpec;
-    version (docs) {
-        /**
-        Translate `message`.
-
-        This does *not* instantiate a new function for every marked string
-        (the signature is fabricated for the sake of documentation).
-
-        Returns: The translation of `message` if one exists in the selected
-        language, or `message` otherwise.
-        See_Also: [selectLanguage]
-
-        Examples:
-        ```
-        writeln(tr!"Translatable message");
-        ```
-        */
-        string tr(string message)() {};
-        /**
-        Translate a message in the correct plural form.
-
-        This does *not* instantiate a new function for every marked string
-        (the signature is fabricated for the sake of documentation).
-
-        The first argument should be in singular form, the second in plural
-        form. Note that the format specifier `%d` is optional.
-
-        Returns: The translation if one exists in the selected
-        language, or the corresponding original otherwise.
-        See_Also: [selectLanguage]
-
-        Examples:
-        ```
-        writeln(tr!("There is a goose!", "There are %d geese!")(n));
-        ```
-        */
-        string tr(string singular, string plural)(size_t n) {};
-    }
-    /*
-    This struct+template trick allows the string to be passed as template parameter without instantiating
-    a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com
-    */
-    @safe private struct TranslatableString
-    {
-        string str;
-        string gettext() const
-        {
-            return currentLanguage.gettext(str);
-        }
-        alias gettext this;
-        string toString() const // Called when a tr!"" literal or constant occurs in a writeln().
-        {
-            return gettext;
-        }
-    }
-    @safe private struct TranslatableStringPlural
-    {
-        string str, strpl;
-        this(string str, string strpl) // This is unfortunately necessary.
-        {
-            this.str = str;
-            this.strpl = strpl;
-        }
-        string opCall(size_t number) const
-        {
-            import std.algorithm : max;
-
-            const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
-            const trans =  currentLanguage.ngettext(str, strpl, n);
-            if (countFormatSpecifiers(trans) == countFormatSpecifiers(strpl))
-            {
-                try
-                    return format(trans.disableAllButLastSpecifier, n);
-                catch(FormatException e)
-                {
-                    debug throw(e);
-                    return strpl;   // Fall back on untranslated message.
-                }
-            }
-            else
-                return trans;
-        }
-    }
     template tr(string singular, string[Tr] attributes = null)
     {
         enum tr = TranslatableString(singular);
@@ -350,83 +264,215 @@ else // Translation mode.
     {
         enum tr = TranslatableStringPlural(singular, plural);
     }
+}
+import std.format : format, FormatException, FormatSpec;
+version (docs) {
+    /**
+    Translate `message`.
 
-    private int countFormatSpecifiers(string fmt) pure @safe
+    This does *not* instantiate a new function for every marked string
+    (the signature is fabricated for the sake of documentation).
+
+    Returns: The translation of `message` if one exists in the selected
+    language, or `message` otherwise.
+    See_Also: [selectLanguage]
+
+    Examples:
+    ```
+    writeln(tr!"Translatable message");
+    ```
+    */
+    string tr(string message)() {};
+    /**
+    Translate a message in the correct plural form.
+
+    This does *not* instantiate a new function for every marked string
+    (the signature is fabricated for the sake of documentation).
+
+    The first argument should be in singular form, the second in plural
+    form. Note that the format specifier `%d` is optional.
+
+    Returns: The translation if one exists in the selected
+    language, or the corresponding original otherwise.
+    See_Also: [selectLanguage]
+
+    Examples:
+    ```
+    writeln(tr!("There is a goose!", "There are %d geese!")(n));
+    ```
+    */
+    string tr(string singular, string plural)(size_t n) {};
+}
+/*
+This struct+template trick allows the string to be passed as template parameter without instantiating
+a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com
+*/
+@safe struct TranslatableString
+{
+    private immutable(string)[] seq;
+    this (string str) nothrow
     {
-        static void ns(const(char)[] arr) {} // the simplest output range
-        auto nullSink = &ns;
-        int count = 0;
-        auto f = FormatSpec!char(fmt);
-        while (f.writeUpToNextSpec(nullSink))
-            count++;
-        return count;
+        seq = [str];
     }
-    unittest 
+    this (string[] seq) nothrow
     {
-        assert ("On %2$s I eat %3$s and walk for %1$d hours.".countFormatSpecifiers == 3);
-        assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".countFormatSpecifiers == 1);
+        this.seq = seq.idup;
     }
-
-    private immutable(Char)[] disableAllButLastSpecifier(Char)(const Char[] inp) @safe
+    this (immutable(string)[] seq) nothrow
     {
-        import std.array : Appender;
-        import std.conv : to;
-        import std.exception : enforce;
-        import std.typecons : tuple;
+        this.seq = seq;
+    }
+    string gettext() const
+    {
+        import std.algorithm : map;
+        import std.array : join;
 
-        enum Mode {undefined, inSequence, outOfSequence}
-        Mode mode = Mode.undefined;
+        return seq.map!(a => currentLanguage.gettext(a)).join;
+    }
+    alias gettext this;
+    string toString() const // Called when a tr!"" literal or constant occurs in a writeln().
+    {
+        return gettext;
+    }
+    TranslatableString opBinary(string op : "~", RHS)(RHS rhs) nothrow
+    {
+        import std.traits : Unconst;
 
-        Appender!(Char[]) outp;
-        outp.reserve(inp.length + 10);
-        // Traverse specs, disable all of them, note where the highest index is. Re-enable that one.
-        size_t lastSpecIndex = 0, highestSpecIndex = 0, highestSpecPos = 0, specs = 0;
-        auto f = FormatSpec!Char(inp);
-        while (f.trailing.length > 0)
+        static if (is (RHS == TranslatableString))
+            return TranslatableString(seq ~ rhs.seq);
+        else static if (is (Unconst!RHS == TranslatableString))
+            return TranslatableString(seq ~ rhs.seq.dup);
+        // TODO Add a reserved context so that ordinary strings don't accidentally get translated.
+        else static if (is (RHS == string))
+            return TranslatableString(seq ~ rhs);
+        else static if (is (Unconst!RHS == char))
+            return TranslatableString(seq ~ [rhs].idup);
+        else
+            static assert (false, "Need implementation for " ~ RHS.stringof);
+    }
+    TranslatableString opBinaryRight(string op : "~", LHS)(LHS lhs) nothrow
+    {
+        import std.traits : Unconst;
+
+        static if (is (LHS == TranslatableString))
+            return TranslatableString(lhs.seq ~ seq);
+        static if (is (Unconst!LHS == TranslatableString))
+            return TranslatableString(lhs.seq.dup ~ seq);
+        // TODO Add a reserved context so that ordinary strings don't accidentally get translated.
+        else static if (is (LHS == string))
+            return TranslatableString([lhs] ~ seq);
+        else static if (is (LHS == char[]))
+            return TranslatableString([lhs.idup] ~ seq);
+        else static if (is (LHS == char))
+            return TranslatableString([[lhs.idup]] ~ seq);
+        else
+            static assert (false, "Need implementation for " ~ LHS.stringof);
+    }
+}
+@safe struct TranslatableStringPlural
+{
+    string str, strpl;
+    this(string str, string strpl)
+    {
+        this.str = str;
+        this.strpl = strpl;
+    }
+    string opCall(size_t number) const
+    {
+        import std.algorithm : max;
+
+        const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
+        const trans =  currentLanguage.ngettext(str, strpl, n);
+        if (countFormatSpecifiers(trans) == countFormatSpecifiers(strpl))
         {
-            if (f.writeUpToNextSpec(outp))
+            try
+                return format(trans.disableAllButLastSpecifier, n);
+            catch(FormatException e)
             {
-                // Mode check.
-                if (mode == Mode.undefined)
-                    mode = f.indexStart > 0 ? Mode.outOfSequence : Mode.inSequence;
-                else
-                    enforce!FormatException( mode == Mode.inSequence && f.indexStart == 0 ||
-                                            (mode == Mode.outOfSequence && f.indexStart != lastSpecIndex),
-                            `Cannot mix specifiers with and without a position argument in "` ~ inp ~ `"`);
-                // Track the highest.
-                if (f.indexStart == 0)
-                    highestSpecPos = outp[].length + 1;
-                else
-                    if (f.indexStart > highestSpecIndex)
-                    {
-                        highestSpecIndex = f.indexStart;
-                        highestSpecPos = outp[].length + 1;
-                    }
-                // disable
-                auto curFmtSpec = inp[outp[].length - specs .. $ - f.trailing.length];
-                outp ~= '%'.to!Char ~ curFmtSpec;
-                lastSpecIndex = f.indexStart;
-                specs++;
+                debug throw(e);
+                return strpl;   // Fall back on untranslated message.
             }
-
         }
-        return mode == Mode.inSequence ?
-            (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + 1 .. $]).idup :
-            (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + highestSpecIndex.to!string.length + 2 .. $]).idup;
+        else
+            return trans;
     }
-    unittest
-    {
-        import std.exception;
+}
 
-        assert ("Я считаю %d яблоко.".disableAllButLastSpecifier ==
-                "Я считаю %d яблоко.");
-        assert ("Last %s, in %s, I ate %d muffins".disableAllButLastSpecifier ==
-                "Last %%s, in %%s, I ate %d muffins");
-        assert ("I ate %3$d muffins on %1$s in %2$s.".disableAllButLastSpecifier ==
-                "I ate %d muffins on %%1$s in %%2$s.");
-        assertThrown("An unpositioned %d specifier mixed with positioned specifier %3$s".disableAllButLastSpecifier);
-        assertThrown("A positioned specifier %3$s mixed with unpositioned %d specifier".disableAllButLastSpecifier);
+private int countFormatSpecifiers(string fmt) pure @safe
+{
+    static void ns(const(char)[] arr) {} // the simplest output range
+    auto nullSink = &ns;
+    int count = 0;
+    auto f = FormatSpec!char(fmt);
+    while (f.writeUpToNextSpec(nullSink))
+        count++;
+    return count;
+}
+unittest 
+{
+    assert ("On %2$s I eat %3$s and walk for %1$d hours.".countFormatSpecifiers == 3);
+    assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".countFormatSpecifiers == 1);
+}
+
+private immutable(Char)[] disableAllButLastSpecifier(Char)(const Char[] inp) @safe
+{
+    import std.array : Appender;
+    import std.conv : to;
+    import std.exception : enforce;
+    import std.typecons : tuple;
+
+    enum Mode {undefined, inSequence, outOfSequence}
+    Mode mode = Mode.undefined;
+
+    Appender!(Char[]) outp;
+    outp.reserve(inp.length + 10);
+    // Traverse specs, disable all of them, note where the highest index is. Re-enable that one.
+    size_t lastSpecIndex = 0, highestSpecIndex = 0, highestSpecPos = 0, specs = 0;
+    auto f = FormatSpec!Char(inp);
+    while (f.trailing.length > 0)
+    {
+        if (f.writeUpToNextSpec(outp))
+        {
+            // Mode check.
+            if (mode == Mode.undefined)
+                mode = f.indexStart > 0 ? Mode.outOfSequence : Mode.inSequence;
+            else
+                enforce!FormatException( mode == Mode.inSequence && f.indexStart == 0 ||
+                                        (mode == Mode.outOfSequence && f.indexStart != lastSpecIndex),
+                        `Cannot mix specifiers with and without a position argument in "` ~ inp ~ `"`);
+            // Track the highest.
+            if (f.indexStart == 0)
+                highestSpecPos = outp[].length + 1;
+            else
+                if (f.indexStart > highestSpecIndex)
+                {
+                    highestSpecIndex = f.indexStart;
+                    highestSpecPos = outp[].length + 1;
+                }
+            // disable
+            auto curFmtSpec = inp[outp[].length - specs .. $ - f.trailing.length];
+            outp ~= '%'.to!Char ~ curFmtSpec;
+            lastSpecIndex = f.indexStart;
+            specs++;
+        }
+
     }
+    return mode == Mode.inSequence ?
+        (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + 1 .. $]).idup :
+        (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + highestSpecIndex.to!string.length + 2 .. $]).idup;
+}
+unittest
+{
+    import std.exception;
+
+    assert ("Я считаю %d яблоко.".disableAllButLastSpecifier ==
+            "Я считаю %d яблоко.");
+    assert ("Last %s, in %s, I ate %d muffins".disableAllButLastSpecifier ==
+            "Last %%s, in %%s, I ate %d muffins");
+    assert ("I ate %3$d muffins on %1$s in %2$s.".disableAllButLastSpecifier ==
+            "I ate %d muffins on %%1$s in %%2$s.");
+    assertThrown("An unpositioned %d specifier mixed with positioned specifier %3$s".disableAllButLastSpecifier);
+    assertThrown("A positioned specifier %3$s mixed with unpositioned %d specifier".disableAllButLastSpecifier);
 }
 
 /**
@@ -459,7 +505,7 @@ enum main = q{
 
 import mofile;
 
-MoFile currentLanguage;
+private MoFile currentLanguage;
 
 /**
 Collect a list of available `*.mo` files.
@@ -487,13 +533,25 @@ string[] availableLanguages(string moPath = null)
 }
 
 /**
+Returns the language code for the current language.
+*/
+string languageCode() @safe
+{
+    import std.string : lineSplitter;
+    import std.algorithm : find, startsWith;
+    auto l = currentLanguage.header.lineSplitter.find!(a => a.startsWith("Language: "));
+    return l.empty ? "Default" : l.front["Language: ".length .. $];
+}
+
+/**
 Returns the language code for the translation contained in `moFile`.
 */
 string languageCode(string moFile) @safe
 {
     import std.string : lineSplitter;
-    import std.algorithm : filter, startsWith;
-    return MoFile(moFile).header.lineSplitter.filter!(a => a.startsWith("Language: ")).front["Language: ".length .. $];
+    import std.algorithm : find, startsWith;
+    auto l = MoFile(moFile).header.lineSplitter.find!(a => a.startsWith("Language: "));
+    return l.empty ? "Undefined" : l.front["Language: ".length .. $];
 }
 
 /**
