@@ -33,7 +33,7 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
 
 ```json
     "dependencies": {
-        "gettext": "*"
+        "gettext": "~>1.0"
     },
     "configurations": [
         {
