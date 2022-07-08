@@ -6,7 +6,7 @@
     "copyright": "Copyright © 2022, SARC B.V.",
     "description": "Internationalization compatible with the GNU gettext utilities.",
     "license": "BSL-1.0",
-    "targetType": "sourceLibrary",
+    "targetType": "library",
     "dependencies": {
         "mofile": "~>0.2.1"
     },
