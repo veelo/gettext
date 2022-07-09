@@ -77,10 +77,9 @@ version (xgettext) // String extraction mode.
         string header() @safe
         {
             import std.exception : ifThrown;
-
             import std.array : join;
-
             import std.json, std.process;
+            import std.string : strip;
 
             string rootPackage = potFile.baseName;
 
@@ -122,7 +121,7 @@ version (xgettext) // String extraction mode.
             string idVersion()
             {
                 auto gitResult = execute(["git", "describe"]);
-                auto _version = gitResult.status == 0 ? gitResult.output : "PACKAGE VERSION";
+                auto _version = gitResult.status == 0 ? gitResult.output.strip : "PACKAGE VERSION";
                 return (`"Project-Id-Version: ` ~ _version ~ `\n"`);
             }
             string bugs()
