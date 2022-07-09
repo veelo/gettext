@@ -57,15 +57,15 @@ version (xgettext) // String extraction mode.
     import std.array : join;
     import std.ascii : newline;
 
-    enum Format {plain, c}
-    alias Key = Tuple!(string, "singular",
-                       string, "plural",
-                       Format, "format",
-                       string, "context");
+    private enum Format {plain, c}
+    private alias Key = Tuple!(string, "singular",
+                               string, "plural",
+                               Format, "format",
+                               string, "context");
     private string[][Key] translatableStrings;
     private string[][Key] comments;
 
-    string potFile;
+    private string potFile;
 
     private void writePOT(string potFile) @safe
     {
@@ -156,14 +156,14 @@ version (xgettext) // String extraction mode.
         writeln(potFile ~ " generated.");
     }
 
-    string stringify(string str) @safe pure
+    private string stringify(string str) @safe pure
     {
         import std.conv : text;
 
         return text([str])[1 .. $-1];
     }
 
-    string messageFromKey(Key key) @safe
+    private string messageFromKey(Key key) @safe
     {
         string message;
         if (auto c = key in comments)

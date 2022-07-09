@@ -15,7 +15,8 @@ gettext-test-*
 *.obj
 *.lst
 /.vs
+*.sln
 .xgettext
 *.pot
 *.mo
-tests/teohdemo/bin
+bin/
