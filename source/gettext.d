@@ -333,6 +333,10 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
     {
         return gettext;
     }
+    void toString(scope void delegate(scope const(char)[]) @safe sink) const
+    {
+        sink(gettext);
+    }
     TranslatableString opBinary(string op : "~", RHS)(RHS rhs) nothrow
     {
         import std.traits : Unconst;
