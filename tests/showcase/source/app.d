@@ -83,8 +83,8 @@ EOS");
     auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
                                               Tr.note: `Nautical term! "Draft" = how deep the bottom ` ~
                                                        `of the ship is below the water level.`]);
-    writeln(message1); // Work in progress.
-    writeln(message2); // Work in progress.
+    writeln(message1);
+    writeln(message2);
 
     // Translation of format strings.
     auto f = format(tr!"Format the %s", "string");

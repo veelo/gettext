@@ -257,7 +257,7 @@ else // Translation mode.
 {
     template tr(string singular, string[Tr] attributes = null)
     {
-        enum tr = TranslatableString(singular);
+        enum tr = TranslatableString(singular, attributes);
     }
     template tr(string singular, string plural, string[Tr] attributes = null)
     {
@@ -308,9 +308,13 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
 */
 @safe struct TranslatableString
 {
+    private enum string soh = "\x01";
+    private enum string eot = "\x04";
     private immutable(string)[] seq;
-    this (string str) nothrow
+    this (string str, string[Tr] attributes = null) nothrow
     {
+        if (auto context = Tr.context in attributes)
+            str = soh ~ *context ~ eot ~ str;
         seq = [str];
     }
     this (string[] seq) nothrow
@@ -323,10 +327,18 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
     }
     string gettext() const
     {
-        import std.algorithm : map;
+        import std.algorithm : findSplitAfter, map, startsWith;
         import std.array : join;
 
-        return seq.map!(a => currentLanguage.gettext(a)).join;
+        string proxy(string message)
+        {
+             if (message.startsWith(soh))
+                return currentLanguage.gettext(message[1 .. $]).findSplitAfter(eot)[1];
+            else
+                return currentLanguage.gettext(message);
+        }
+
+        return seq.map!(a => proxy(a)).join;
     }
     alias gettext this;
     string toString() const // Called when a tr!"" literal or constant occurs in a writeln().

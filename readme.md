@@ -15,7 +15,7 @@ This Gettext package removes the need for an external parser and provides a more
 - Concatenations of translatable strings, untranslated strings and single chars are supported, even in initializers.
 - Arrays of translatable strings are supported, also when statically initialized.
 - Plural forms are language dependent.
-- Multiple identical strings are translated once<!--, unless they are given different contexts WIP-->.
+- Multiple identical strings are translated once, unless they are given different contexts.
 - Notes to the translator can be attached to individual translatable strings.
 - Code occurrences of strings are communicated to the translator.
 - Available languages are discovered and selected at run-time.
@@ -159,8 +159,6 @@ auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
                                                    `of the ship is below the water level.`]);
 ```
 
-**Work in progress:** Mofile currently does not yet retrieve strings that have a context set.
-
 ### Selecting a translation
 
 Use the following functions to discover translation tables, get the language code for a table and activate a translation:
@@ -241,9 +239,9 @@ The `teohdemo` test contained in this package produces the following `teohdemo.p
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: v1.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-24T14:22:55.3248589Z\n"
+"POT-Creation-Date: 2022-07-09T20:52:52.4027136Z\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -252,11 +250,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: source/app.d:10(main)
+#, c-format
+msgid "Selected language: %s"
+msgstr ""
+
 #: source/mod1.d:13(fun1) source/mod2.d:15(fun3)
 msgid "Identical strings share their translation!"
 msgstr ""
 
 #: source/mod1.d:7
+#, c-format
 msgid "Hello! My name is %s."
 msgstr ""
 
@@ -393,7 +397,3 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 Investigate the merit of:
 - [Domains](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
-
-# Bugs
-
-Mofile doesn't support retrieving strings with contexts yet.
