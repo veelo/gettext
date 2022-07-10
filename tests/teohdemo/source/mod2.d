@@ -1,3 +1,4 @@
+/** $(NEVER_DOCUMENT) */
 module mod2;
 
 import std.stdio;

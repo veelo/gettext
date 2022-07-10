@@ -1,36 +1,79 @@
 /**
-Internationalization compatible with GNU gettext.
+Internationalization compatible with $(LINK2 https://www.gnu.org/software/gettext/, GNU gettext).
+
+Insert the following line at the top of your main function:
+---
+mixin(gettext.main);
+---
+
+Translatable strings are marked by instantiating the `tr` template, like so:
+---
+writeln(tr!"Translatable message");
+---
+
+A translation may require a particular plural form depending on a number. This can be
+achieved by supplying both singular and plural forms as compile time arguments, and the
+number as a runtime argument.
+---
+writeln(tr!("one green bottle hanging on the wall",
+            "%d green bottles hanging on the wall")(n));
+---
+
+Plural forms can be used in format strings, but the argument that determines the form
+must be supplied to `tr` and not to `format`. The corresponding format specifier will
+not be seen by `format` as it will have been replaced with a string by `tr`:
+---
+format(tr!("Welcome %s, you may make a wish",
+           "Welcome %s, you may make %d wishes")(n), name);
+---
+The format specifier that selects the form is the last specifier in the format string
+(here `%d`). In many sentences, however, the specifier that should select the form cannot
+be the last. In these cases, format specifiers must be given a position argument, where
+the highest position determines the form:
+---
+foreach (i, where; [tr!"hand", tr!"bush"])
+    format(tr!("One bird in the %1$s", "%2$d birds in the %1$s")(i + 1), where);
+---
+Again, the specifier with the highest position argument will never be seen by format.
+
+Two identical strings that have different meanings dependent on context may need to be
+translated differently. Dis can be accomplished by disambiguating the string with a
+context argument. It is also possible to attach a comment that will be seen by
+the translator:
+---
+auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
+auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
+                                          Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
+                                                   `of the ship is below the water level.`]);
+---
+
+If you'd rather use an underscore to mark translatable strings,
+[as the GNU gettext documentation suggests](https://www.gnu.org/software/gettext/manual/html_node/Mark-Keywords.html),
+you can use an alias:
+---
+import gettext : _ = tr;    // Customary in GNU software.
+writeln(_!"Translatable message");
+---
+
 Authors:
 $(LINK2 https://github.com/veelo, Bastiaan Veelo)
 Copyright:
 SARC B.V., 2022
 License:
 $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
-See_Also:
-$(LINK2 https://www.gnu.org/software/gettext/, GNU gettext utilities)
-
-
-Translatable strings are marked by instantiating the `tr` template, like so:
-```
-writeln(tr!"Translatable message");
-```
-
-If you'd rather use an underscore to mark translatable strings, [as the GNU
-gettext documentation suggests](https://www.gnu.org/software/gettext/manual/html_node/Mark-Keywords.html),
-you can use an alias:
-```
-import gettext : _ = tr;    // Customary in GNU software.
-writeln(_!"Translatable message");
-```
 */
 
 module gettext;
 
 /// Optional attribute categories.
-enum Tr { note, context }
+enum Tr {
+    note,   /// Pass a note to the translator.
+    context /// Disambiguate by giving a context.
+}
 
 version (xgettext) // String extraction mode.
 {
+    /** $(NEVER_DOCUMENT) */
     bool scan()
     {
         import std.getopt;
@@ -188,6 +231,7 @@ version (xgettext) // String extraction mode.
         return message;
     }
 
+    /** $(NEVER_DOCUMENT) */
     template tr(string singular, string[Tr] attributes = null,
                 int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
@@ -195,6 +239,7 @@ version (xgettext) // String extraction mode.
                        line, file, mod, func, Args);
     }
 
+    /** $(NEVER_DOCUMENT) */
     template tr(string singular, string plural, string[Tr] attributes = null,
                 int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
@@ -255,17 +300,6 @@ version (xgettext) // String extraction mode.
 }
 else // Translation mode.
 {
-    template tr(string singular, string[Tr] attributes = null)
-    {
-        enum tr = TranslatableString(singular, attributes);
-    }
-    template tr(string singular, string plural, string[Tr] attributes = null)
-    {
-        enum tr = TranslatableStringPlural(singular, plural);
-    }
-}
-import std.format : format, FormatException, FormatSpec;
-version (docs) {
     /**
     Translate `message`.
 
@@ -277,11 +311,14 @@ version (docs) {
     See_Also: [selectLanguage]
 
     Examples:
-    ```
+    ---
     writeln(tr!"Translatable message");
-    ```
+    ---
     */
-    string tr(string message)() {};
+    template tr(string singular, string[Tr] attributes = null)
+    {
+        enum tr = TranslatableString(singular, attributes);
+    }
     /**
     Translate a message in the correct plural form.
 
@@ -296,12 +333,41 @@ version (docs) {
     See_Also: [selectLanguage]
 
     Examples:
-    ```
+    ---
     writeln(tr!("There is a goose!", "There are %d geese!")(n));
-    ```
+    ---
     */
-    string tr(string singular, string plural)(size_t n) {};
+    template tr(string singular, string plural, string[Tr] attributes = null)
+    {
+        enum tr = TranslatableStringPlural(singular, plural);
+    }
 }
+import std.format : format, FormatException, FormatSpec;
+
+/**
+Represents a translatable string.
+
+This struct can for the most part be considered an implementation detail of `gettext`.
+A template instantiation like `tr!"Greetings"` actually results in a constructor call like
+`TranslatableString("Greetings")` in the code. This struct is callable, so that a lookup
+of the translation happens when the struct is evaluated.
+
+The only reason that this struct is public is to make declarations of static arrays of
+translatable strings less cryptic:
+
+---
+enum RGB {red, green, blue}
+
+// Explicit array of translatable strings:
+immutable TranslatableString[Color.max + 1] colors1 = [RGB.red:   tr!"Red",
+                                                       RGB.green: tr!"Green",
+                                                       RGB.blue:  tr!"Blue"];
+// Array of translatable strings where the type is derived:
+immutable typeof(tr!"Red")[Color.max + 1] colors2 = [RGB.red:   tr!"Red",
+                                                     RGB.green: tr!"Green",
+                                                     RGB.blue:  tr!"Blue"];
+---
+*/
 /*
 This struct+template trick allows the string to be passed as template parameter without instantiating
 a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1@digitalmars.com
@@ -341,10 +407,27 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
         return seq.map!(a => proxy(a)).join;
     }
     alias gettext this;
+    /** Forces evaluation as translated string.
+
+    In a limited set of circumstances, a `TranslatableString` may forcefully need to be interpreted as a string.
+    One of these cases is a *named* enum:
+
+    ---
+    enum E {member = tr!"translation"}
+    writeln(E.member);          // "member"
+    writeln(E.member.toString); // "translation"
+    ---
+    Contrary, anonimous enums and manifest constants do not require this treatment:
+    ---
+    enum {member = tr!"translation"}
+    writeln(member); // "translation"
+    ---
+    */
     string toString() const // Called when a tr!"" literal or constant occurs in a writeln().
     {
         return gettext;
     }
+    /// idem
     void toString(scope void delegate(scope const(char)[]) @safe sink) const
     {
         sink(gettext);
@@ -494,15 +577,15 @@ unittest
 Code to be mixed in at the top of your `main()` function.
 
 Examples:
-```
+---
 void main()
 {
-import gettext;
-mixin(gettext.main);
+    import gettext;
+    mixin(gettext.main);
 
-// Your code.
+    // Your code.
 }
-```
+---
 */
 enum main = q{
     version (xgettext)

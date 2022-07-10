@@ -17,10 +17,6 @@
         {
             "name": "xgettext",
             "versions": [ "xgettext" ]
-        },
-        {
-            "name": "docs",
-            "versions":  [ "docs" ]
         }
     ],
     "subPackages": [
