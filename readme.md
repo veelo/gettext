@@ -6,7 +6,39 @@ The use of GNU `gettext` in D has been enabled by the [mofile](https://code.dlan
 
 This Gettext package removes the need for an external parser and provides a more powerful interface than GNU `gettext` itself. It combines convenient and reliable string extraction - enabled by D's unique language features - and a comprehensive integration with Dub, while leveraging a well established ecosystem for translation into other natural languages.
 
-## Features
+### Contents
+- [Features](#features)
+- [Installation](#installation)
+    - [Dub configuration](#dub-configuration)
+    - [`main()` function](#main-function)
+    - [Ignore generated files](#ignore-generated-files)
+- [Usage](#usage)
+    - [Marking strings](#marking-strings)
+    - [Plural forms](#plural-forms)
+    - [Marking format strings](#marking-format-strings)
+    - [Concatenations](#concatenations)
+    - [Passing attributes](#passing-attributes)
+        - [Passing notes to the translator](#passing-notes-to-the-translator)
+        - [Disambiguate identical sentences](#disambiguate-identical-sentences)
+    - [Selecting a translation](#selecting-a-translation)
+    - [Finding unmarked strings](#finding-unmarked-strings)
+    - [Fixing compilation errors](#fixing-compilation-errors)
+    - [Added steps to the build process](#added-steps-to-the-build-process)
+        - [Creating/updating the PO template automatically](#creatingupdating-the-PO-template-automatically)
+        - [Updating existing translations automatically](#updating-existing-translations-automatically)
+        - [Converting to binary form automatically](#converting-to-binary-form-automatically)
+    - [Adding translations](#adding-translations)
+    - [Updating translations](#updating-translations)
+- [Example](#example-1)
+- [Impact on footprint and performance](#impact-on-footprint-and-performance)
+- [Limitations](#limitations)
+    - [Wide strings](#wide-strings)
+    - [Forced string evaluation](#forced-string-evaluation)
+    - [Named enums](#named-enums)
+- [Credits](#credits)
+- [Todo](#todo)
+
+# Features
 
 - Concise translation markers that can be aliased to your preference.
 - All marked strings that are seen by the compiler are extracted automatically.
@@ -14,7 +46,7 @@ This Gettext package removes the need for an external parser and provides a more
 - Static initializers of fields, constants, immutables, manifest constants and anonimous enums can be marked as translatable (a D specialty).
 - Concatenations of translatable strings, untranslated strings and single chars are supported, even in initializers.
 - Arrays of translatable strings are supported, also when statically initialized.
-- Plural forms are language dependent.
+- Plural forms are language dependent, and play nice with format strings.
 - Multiple identical strings are translated once, unless they are given different contexts.
 - Notes to the translator can be attached to individual translatable strings.
 - Code occurrences of strings are communicated to the translator.
@@ -25,9 +57,9 @@ This Gettext package removes the need for an external parser and provides a more
 - Automated generation of Machine Object files (MO) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
 - Includes utility for listing unmarked strings in the project.
 
-## Installation
+# Installation
 
-### Dub configuration
+## Dub configuration
 
 Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`):
 
@@ -59,14 +91,14 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
 ```
 This may seem quite the boiler plate, but it automates many steps without taking away your control over them. We'll discuss these further below.
 
-### `main()` function
+## `main()` function
 
 Insert the following line at the top of your `main` function:
 ```d
 mixin(gettext.main);
 ```
 
-### Ignore generated files
+## Ignore generated files
 
 The PO template and MO files are generated, and need not be kept under version control. The executable in the `.xgettext` folder is an artefact of the string extraction process. If you use Git, add these lines to `.gitignore`:
 ```
@@ -75,15 +107,17 @@ The PO template and MO files are generated, and need not be kept under version c
 *.mo
 ```
 
-## Usage
+# Usage
 
-### Marking strings
+## Marking strings
 
 Prepend `tr!` in front of every string literal that needs to be translated. For instance:
 ```d
 writeln(tr!"This string is to be translated");
 writeln("This string will remain untranslated.");
 ```
+
+## Plural forms
 
 Sentences that should change in plural form depending on a number should supply both singlular and plural forms with the number like this:
 ```d
@@ -95,7 +129,7 @@ writeln(tr!("one green bottle hanging on the wall",
 ```
 Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular form.
 
-Many languages have not just two forms like the English language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator.
+Many languages have not just two forms like the English language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator, and is demonstrated in [the example below](#example-1).
 
 If `tr` is too verbose for you, you can change it to whatever you want:
 ```d
@@ -103,7 +137,7 @@ import gettext : _ = tr;
 writeln(_!"No green bottles...");
 ```
 
-### Marking format strings
+## Marking format strings
 
 Translatable strings can be format strings, used with `std.format` and `std.stdio.writefln` etc. These format strings do support plural forms, but the argument that determines the form must be supplied to `tr` and not to `format`. The corresponding format specifier will not be seen by `format` as it will have been replaced with a string by `tr`. Example:
 ```d
@@ -119,7 +153,7 @@ Again, the specifier with the highest position argument will never be seen by `f
 
 Note: Specifiers with and without a position argument must not be mixed.
 
-### Concatenations
+## Concatenations
 
 Translators will be able to produce the best translations if they get to work with full sentences, like
 ```d
@@ -130,11 +164,11 @@ However, in support of legacy code, concatenations of strings do work:
 auto message = tr!`Could not open the file "` ~ file ~ tr!`" for reading.`;
 ```
 
-### Passing attributes
+## Passing attributes
 
 Optionally, two kinds of attributes can be passed to `tr`, in the form of an associative array initializer. These are for passing notes to the translator and for disambiguating identical sentences with different meanings.
 
-#### Passing notes to the translator
+### Passing notes to the translator
 
 Sometimes a sentence can be interpreted to mean different things, and then it is important to be able to clarify things for the translator. Here is an example of how to do this:
 ```d
@@ -143,7 +177,7 @@ auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltə
 
 The GNU `gettext` manual has a section [about the translation of proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
 
-#### Disambiguate identical sentences (w.i.p.)
+### Disambiguate identical sentences
 
 Multiple occurrences of the same sentence are combined into one translation by default. In some cases, that may not work well. Some language, for example, may need to translate identical menu items in different menus differently. These can be disambiguated by adding a context like so:
 ```d
@@ -159,7 +193,7 @@ auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
                                                    `of the ship is below the water level.`]);
 ```
 
-### Selecting a translation
+## Selecting a translation
 
 Use the following functions to discover translation tables, get the language code for a table and activate a translation:
 ```d
@@ -170,7 +204,7 @@ void selectLanguage(string moFile) @safe
 ```
 Note that any translation that happens before a language is selected, results in the value of the hard coded string.
 
-### Finding unmarked strings
+## Finding unmarked strings
 
 To get an overview of all string literals in your project that are not marked as translatable, execute the following in your project root folder:
 ```shell
@@ -178,7 +212,7 @@ dub run gettext:todo -q
 ```
 This prints a list of strings with their source file names and row numbers.
 
-### Fixing compilation errors
+## Fixing compilation errors
 
 An attempt to translate a static string initializer will cause a compilation error, because the language is only selected at run-time. For example:
 ```d
@@ -201,12 +235,6 @@ The way this works is that the type of the constant gets to be inferred as `Tran
 
 But, there are places where you wouldn't want to change the type away from `string`, like the initializer of a mutable static variable or an aggregate member. In these cases there is no other way than to move to run-time assignment until after the language has been selected.
 
-### Impact on footprint and performance
-
-The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
-
-There is a cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on the evaluations in an event loop. 
-
 ## Added steps to the build process
 
 With the `postBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
@@ -221,7 +249,7 @@ We'll discuss these in a little more detail below.
 
 In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we employ D itself to perform this task.
 
-This is how this works: The `dub run --config=xgettext` line in the  `preBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
+This is how this works: The `dub run --config=xgettext` line in the  `preBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features ([see credits](#credits)) to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
 
 By default this creates (or overwrites) the PO template in the `po` folder of your project. This can be changed by using options; To see which options are accepted, run the command with the `--help` option:
 ```shell
@@ -294,13 +322,13 @@ There are various tools to do this, from dedicated stand-alone editors, editor p
 
 Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. Or you let the AI give it its best effort and translate all messages at once, before reviewing the problematic ones (requires subscription). It supports marking translations that need work and adding notes.
 
-## Updating translations manually
+## Updating translations
 
 Any translations that have fallen behind the template will need to be updated by a translator. To detect any such translations, you can scan for warnings in the output of this command:
 ```shell
 dub run -q gettext:merge -- --popath=po
 ```
-and look for warnings. Warnings will also show if `gettext` detected what it thinks is a mistake. Sadly it sometimes gets it wrong: Weekdays, for example, are capitalized in English but not in many other languages. If a translation string only consists of one word, a weekday, it guesses that it is the start of a sentence and will complain if the translation does not start with a capital letter. Therefore, translatable strings should be full sentences if at all possible.
+and look for warnings. Warnings will also show if GNU `gettext` detected what it thinks is a mistake. Sadly it sometimes gets it wrong: Weekdays, for example, are capitalized in English but not in many other languages. If a translation string only consists of one word, a weekday, it guesses that it is the start of a sentence and will complain if the translation does not start with a capital letter. Therefore, translatable strings should be full sentences if at all possible.
 
 PO file editors will typically allow translators to quickly jump between strings that need their attention.
 
@@ -311,7 +339,7 @@ dub run gettext:po2mo -- --popath=po --mopath=mo
 
 Currently, Dub does not detect changes in PO files only; Either issue the command by hand or `--force` a recompilation of your project.
 
-## Example
+# Example
 
 These are some runs of the included `teohdemo` test:
 ```
@@ -348,6 +376,14 @@ Please select a language:
 Я рахую 7 яблук.
 ```
 Notice how the translation of "apple" in the last translation changes with three different endings dependent on the number of apples.
+
+# Impact on footprint and performance
+
+The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
+
+The discovery of translatable strings happens at compile time in the `xgettext` configuration, and the generation of the PO template happens during execution of the result of that compilation. So this at least doubles compile times of your projects. If that is problematic, the `preBuildCommands` and `copyfiles` in `dub.json` can be moved out of the `default` configuration into a `translate` or `release` configuration, so that this cost is not paid during ordinary development.
+
+There is a run time cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on the evaluations in an event loop. 
 
 # Limitations
 
@@ -397,3 +433,4 @@ The idea for automatic string extraction came from H.S. Teoh [[1]](https://forum
 Investigate the merit of:
 - [Domains](https://www.gnu.org/software/gettext/manual/html_node/Triggering.html) and [Library support](https://www.gnu.org/software/gettext/manual/html_node/Libraries.html).
 - Default language selection dependent on system Locale.
+- Using [Compendia](https://www.gnu.org/software/gettext/manual/html_node/Compendium.html).
