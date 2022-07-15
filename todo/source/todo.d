@@ -48,24 +48,50 @@ import dparse.ast : ASTVisitor;
 class TodoVisitor : ASTVisitor
 {
     import dparse.lexer : Token, tok;
-    import dparse.ast : TemplateInstance;
+    import dparse.ast : ImportDeclaration, TemplateInstance;
 
     alias visit = ASTVisitor.visit;
 
-    string file;
+    string file, marker;
     bool isTranslatable = false;
 
-    override void visit(const TemplateInstance ti)
+    override void visit(const ImportDeclaration decl)
     {
-        if (ti.identifier.text == "tr" ||
-            ti.identifier.text == "_")
+        scope (exit) decl.accept(this);
+        foreach (singleImport; decl.singleImports)
+        {
+            if (singleImport.identifierChain &&
+                singleImport.identifierChain.identifiers.length &&
+                singleImport.identifierChain.identifiers[0].text == "gettext")
+            {
+                marker = "tr";
+                return;
+            }
+        }
+
+        if (decl.importBindings && decl.importBindings.singleImport && decl.importBindings.singleImport.identifierChain &&
+            decl.importBindings.singleImport.identifierChain.identifiers.length &&
+            decl.importBindings.singleImport.identifierChain.identifiers[0].text == "gettext")
+        {
+            foreach (bind; decl.importBindings.importBinds)
+                if (bind.right.text == "tr")
+                {
+                    marker = bind.left.text;
+                    return;
+                }
+        }
+    }
+
+    override void visit(const TemplateInstance inst)
+    {
+        if (inst.identifier.text == marker)
         {
             isTranslatable = true;
-            scope(exit) isTranslatable = false;
-            ti.accept(this);
+            inst.accept(this);
+            isTranslatable = false;
         }
         else
-            ti.accept(this);
+            inst.accept(this);
     }
 
     override void visit(const Token token)
