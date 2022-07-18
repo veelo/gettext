@@ -237,7 +237,7 @@ But, there are places where you wouldn't want to change the type away from `stri
 
 ## Added steps to the build process
 
-With the `postBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
+With the `preBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
 1. Translatable strings are extracted from the sources into a PO template.
 1. Translations in any existing PO files are updated according to the new template.
 1. PO files are converted into binary MO files.
@@ -312,7 +312,7 @@ Note that if translatable strings were changed in the source, or new ones were a
 
 ### Converting to binary form automatically
 
-Similar to the previous step, the `"dub run gettext:po2mo -- --popath=po --mopath=mo"` pret-build command invokes the `po2mo` subpackage, which runs the `msgfmt` utility from GNU `gettext`. This converts all PO files into MO files in the `mo` folder. This folder is then copied to the target directory for inclusion in the distribution of your package. Any additional options are passed on to `msgfmt` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgfmt-Invocation.html).
+Similar to the previous step, the `"dub run gettext:po2mo -- --popath=po --mopath=mo"` pre-build command invokes the `po2mo` subpackage, which runs the `msgfmt` utility from GNU `gettext`. This converts all PO files into MO files in the `mo` folder. This folder is then copied to the target directory for inclusion in the distribution of your package. Any additional options are passed on to `msgfmt` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgfmt-Invocation.html).
 
 ## Adding translations
 
