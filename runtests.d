@@ -6,6 +6,10 @@ int main()
     if (result != 0)
         return result;
 
+    result = runCommand(["dub", "test", "--config=xgettext"]);
+    if (result != 0)
+        return result;
+
     foreach (test; dirEntries("tests", SpanMode.shallow))
     {
         if (!test.isDir)

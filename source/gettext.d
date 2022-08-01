@@ -286,16 +286,18 @@ version (xgettext) // String extraction mode.
     private bool hasFormatSpecifiers(string fmt) pure @safe
     {
         import std.format : FormatSpec;
+        import std.exception : ifThrown;
 
         static void ns(const(char)[] arr) {} // the simplest output range
         auto nullSink = &ns;
-        return FormatSpec!char(fmt).writeUpToNextSpec(nullSink);
+        return FormatSpec!char(fmt).writeUpToNextSpec(nullSink).ifThrown!FormatException(false);
     }
     unittest 
     {
         assert ("On %2$s I eat %3$s and walk for %1$d hours.".hasFormatSpecifiers);
         assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".hasFormatSpecifiers);
         assert (!"On %%2$s I eat %%3$s and walk for hours.".hasFormatSpecifiers);
+        assert (!"98%".hasFormatSpecifiers);
     }
 }
 else // Translation mode.
