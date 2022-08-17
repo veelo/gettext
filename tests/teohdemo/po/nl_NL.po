@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-01T13:58:35.8675482Z\n"
+"POT-Creation-Date: 2022-08-01T10:23:37.6773193Z\n"
 "PO-Revision-Date: 2022-07-01 15:53+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -23,20 +23,20 @@ msgstr ""
 msgid "Selected language: %s"
 msgstr "Geselecteerde taal: %s"
 
-#: source/mod1.d:13(fun1) source/mod2.d:15(fun3)
+#: source/mod1.d:14(fun1) source/mod2.d:16(fun3)
 msgid "Identical strings share their translation!"
 msgstr "Identieke strings delen hun vertaling!"
 
-#: source/mod1.d:7
+#: source/mod1.d:8
 #, c-format
 msgid "Hello! My name is %s."
 msgstr "Hallo! Mijn naam is %s."
 
-#: source/mod2.d:13(fun3)
+#: source/mod2.d:14(fun3)
 msgid "Never used, but nevertheless translated!"
 msgstr "Nooit gebruikt, maar toch vertaald!"
 
-#: source/mod2.d:8(fun2)
+#: source/mod2.d:9(fun2)
 #, c-format
 msgid "I'm counting one apple."
 msgid_plural "I'm counting %d apples."

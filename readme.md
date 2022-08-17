@@ -267,7 +267,7 @@ The `teohdemo` test contained in this package produces the following `teohdemo.p
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: v1.0.1\n"
+"Project-Id-Version: v1.0.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-07-09T20:52:52.4027136Z\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"

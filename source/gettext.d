@@ -592,14 +592,10 @@ void main()
 enum main = q{
     version (xgettext)
     {
+        import core.stdc.stdlib : exit;
+
         if (scan) // Prevent unreachable code warning after mixin.
-        {
-            import std.traits : ReturnType;
-            static if (is (ReturnType!main == void))
-                return;
-            else
-                return 0;
-        }
+            exit(0);
     }
 };
 
