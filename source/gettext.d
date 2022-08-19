@@ -84,7 +84,8 @@ version (xgettext) // String extraction mode.
         potFile = buildPath("po", args[0].baseName);
 
         auto helpInformation = getopt(args,
-                                      "output|o", "The path for the PO template file.", &potFile);
+                                      "output|o", "Set the path for the PO template file.", &potFile,
+                                      "width|w", "Set the output page width (default 80).", &pageWidth);
         if (helpInformation.helpWanted)
         {
             ()@trusted{
@@ -109,6 +110,7 @@ version (xgettext) // String extraction mode.
     private string[][Key] comments;
 
     private string potFile;
+    private size_t pageWidth = 80;
 
     private void writePOT(string potFile) @safe
     {
@@ -205,26 +207,80 @@ version (xgettext) // String extraction mode.
         return text([str])[1 .. $-1];
     }
 
+    private string wrapPrefix(string text, string prefix) @safe
+    {
+        import std.algorithm : filter, map;
+        import std.string : lineSplitter;
+
+        // Cannot use std.string.wrap, we need to preserve trailing whitespace.
+        string wrap(string text)
+        {
+            import std.algorithm : splitWhen;
+            import std.array : appender;
+            import std.uni : isWhite;
+            import std.conv;
+
+            bool mayBreakAfter(dchar c)
+            {
+                return (c.isWhite || c == '-' || c == '/' || c == '?');
+            }
+
+            auto result = appender!string;
+            auto len = 0;
+
+            auto wordsWithTrailingWhitespace = text.splitWhen!((a, b) => (mayBreakAfter(a) && !mayBreakAfter(b)) ||
+                                                               b == '\\' // Copy GNU xgettext malfunction
+                                                               );
+            while (!wordsWithTrailingWhitespace.empty)
+            {
+                result ~= `"`;
+                string nextWord = wordsWithTrailingWhitespace.front.to!string;
+                while (len + nextWord.length < pageWidth - 2)
+                {
+                    result ~= nextWord;
+                    len += nextWord.length;
+                    wordsWithTrailingWhitespace.popFront;
+                    if (wordsWithTrailingWhitespace.empty)
+                        break;
+                    nextWord = wordsWithTrailingWhitespace.front.to!string;
+                }
+                result ~= `"` ~ newline;
+                len = 0;
+            }
+            return result[];
+        }
+
+        if (prefix.length + 1 + text.stringify.length < pageWidth)
+            return prefix ~ " " ~ text.stringify ~ newline;
+        return prefix ~ ` ""` ~ newline ~ wrap(text.stringify[1 .. $ - 1]);
+    }
+
     private string messageFromKey(Key key) @safe
     {
+        import std.algorithm : filter, map;
+        import std.array : array;
+        import std.string : lineSplitter, wrap;
+
         string message;
         if (auto c = key in comments)
             foreach (comment; *c)
                 message ~= `#. ` ~ comment ~ newline;
-        message ~= `#: ` ~ translatableStrings[key].join(" ") ~ newline;
+        message ~= translatableStrings[key].join(" ").
+            wrap(pageWidth - "#: ".length).lineSplitter.filter!(l => l.length).
+            map!(l => "#: " ~ l ~ newline).join;
         if (key.format == Format.c)
             message ~= `#, c-format` ~ newline;
         if (key.context != null)
-            message ~= `msgctxt ` ~ key.context.stringify ~ newline;
+            message ~=  key.context.wrapPrefix(`msgctxt`);
         if (key.plural == null)
         {
-            message ~= `msgid ` ~ key.singular.stringify ~ newline ~
+            message ~=  key.singular.wrapPrefix(`msgid`) ~
                        `msgstr ""` ~ newline;
         }
         else
         {
-            message ~= `msgid ` ~ key.singular.stringify ~ newline ~
-                       `msgid_plural ` ~ key.plural.stringify ~ newline ~
+            message ~= key.singular.wrapPrefix(`msgid`) ~
+                       key.plural.wrapPrefix(`msgid_plural`) ~
                        `msgstr[0] ""` ~ newline ~
                        `msgstr[1] ""` ~ newline;
         }
