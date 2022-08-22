@@ -257,14 +257,28 @@ version (xgettext) // String extraction mode.
 
     private string messageFromKey(Key key) @safe
     {
-        import std.algorithm : filter, map;
+        import std.algorithm : commonPrefix, filter, map, min;
         import std.string : lineSplitter, wrap;
+
+        string stripPrefix(string reference)
+        {
+            static size_t charsToStrip = size_t.max;
+            if (charsToStrip == size_t.max)
+            {
+                string first = translatableStrings.values[0][0];
+                foreach (strs; translatableStrings)
+                    foreach (str; strs)
+                        charsToStrip = min(charsToStrip, commonPrefix(str, first).length);
+            }
+            assert(reference.length > charsToStrip);
+            return reference[charsToStrip .. $];
+        }
 
         string message;
         if (auto c = key in comments)
             foreach (comment; *c)
                 message ~= `#. ` ~ comment ~ newline;
-        message ~= translatableStrings[key].join(" ").
+        message ~= translatableStrings[key].map!stripPrefix.join(" ").
             wrap(pageWidth - "#: ".length).lineSplitter.filter!(l => l.length).
             map!(l => "#: " ~ l ~ newline).join;
         if (key.format == Format.c)
@@ -288,7 +302,7 @@ version (xgettext) // String extraction mode.
 
     /** $(NEVER_DOCUMENT) */
     template tr(string singular, string[Tr] attributes = null,
-                int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
         alias tr = tr!(singular, null, attributes,
                        line, file, mod, func, Args);
@@ -296,7 +310,7 @@ version (xgettext) // String extraction mode.
 
     /** $(NEVER_DOCUMENT) */
     template tr(string singular, string plural, string[Tr] attributes = null,
-                int line = __LINE__, string file = __FILE__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
     {
         static struct StrInjector
         {
