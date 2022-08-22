@@ -84,7 +84,7 @@ version (xgettext) // String extraction mode.
         potFile = buildPath("po", args[0].baseName);
 
         auto helpInformation = getopt(args,
-                                      "output|o", "Set the path for the PO template file.", &potFile,
+                                      "output|o", "Set the path and file name for the PO template file.", &potFile,
                                       "width|w", "Set the output page width (default 80).", &pageWidth);
         if (helpInformation.helpWanted)
         {
