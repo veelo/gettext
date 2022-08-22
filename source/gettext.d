@@ -218,7 +218,7 @@ version (xgettext) // String extraction mode.
             import std.algorithm : splitWhen;
             import std.array : appender;
             import std.uni : isWhite;
-            import std.conv;
+            import std.conv : to;
 
             bool mayBreakAfter(dchar c)
             {
@@ -258,7 +258,6 @@ version (xgettext) // String extraction mode.
     private string messageFromKey(Key key) @safe
     {
         import std.algorithm : filter, map;
-        import std.array : array;
         import std.string : lineSplitter, wrap;
 
         string message;
@@ -308,7 +307,7 @@ version (xgettext) // String extraction mode.
                     import std.conv : to;
                     import std.array : join;
                     import std.algorithm : commonPrefix;
-                    import std.path : buildPath, pathSplitter;
+                    import std.path : pathSplitter;
 
                     static if (func.length == 0)
                         return file.pathSplitter.join("/") ~ ":" ~ line.to!string;
