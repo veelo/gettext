@@ -235,7 +235,7 @@ version (xgettext) // String extraction mode.
             {
                 result ~= `"`;
                 string nextWord = wordsWithTrailingWhitespace.front.to!string;
-                while (len + nextWord.length < pageWidth - 2)
+                do
                 {
                     result ~= nextWord;
                     len += nextWord.length;
@@ -243,7 +243,7 @@ version (xgettext) // String extraction mode.
                     if (wordsWithTrailingWhitespace.empty)
                         break;
                     nextWord = wordsWithTrailingWhitespace.front.to!string;
-                }
+                } while (len + nextWord.length < pageWidth - 2);
                 result ~= `"` ~ newline;
                 len = 0;
             }
