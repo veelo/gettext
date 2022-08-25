@@ -74,14 +74,16 @@ enum Tr {
 version (xgettext) // String extraction mode.
 {
     /** $(NEVER_DOCUMENT) */
-    bool scan()
+    bool scan(string mainFullPath = __FILE_FULL_PATH__, string mainFile = __FILE__)
     {
         import std.getopt;
-        import std.path : baseName, buildPath, setExtension;
+        import std.path : baseName, buildPath, pathSplitter, setExtension;
         import core.runtime : Runtime;
 
         auto args = Runtime.args;
         potFile = buildPath("po", args[0].baseName);
+
+        mainPathPrefix = mainFullPath[0 .. $ - mainFile.length].pathSplitter.join("/") ~ "/";
 
         auto helpInformation = getopt(args,
                                       "output|o", "Set the path and file name for the PO template file.", &potFile,
@@ -108,6 +110,7 @@ version (xgettext) // String extraction mode.
                                string, "context");
     private string[][Key] translatableStrings;
     private string[][Key] comments;
+    private string mainPathPrefix;
 
     private string potFile;
     private size_t pageWidth = 80;
@@ -264,12 +267,9 @@ version (xgettext) // String extraction mode.
         {
             static size_t charsToStrip = size_t.max;
             if (charsToStrip == size_t.max)
-            {
-                string first = translatableStrings.values[0][0];
                 foreach (strs; translatableStrings)
                     foreach (str; strs)
-                        charsToStrip = min(charsToStrip, commonPrefix(str, first).length);
-            }
+                        charsToStrip = min(charsToStrip, commonPrefix(str, mainPathPrefix).length);
             assert(reference.length > charsToStrip);
             return reference[charsToStrip .. $];
         }
