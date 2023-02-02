@@ -409,6 +409,27 @@ static const tr_and_tr = tr!"One " ~ tr!"sentence.";
 assert (tr_and_tr.toString == tr!"One sentence.".toString); // Fails without `.toString`.
 ```
 
+## Justified Strings
+
+Format strings accept a width argument so that
+```d
+"hi".format!"%10s";                // "        hi";
+```
+produces a string of width 10 in which the contents are right justified. However, passing a translatable string directly will not work as intended:
+```d
+tr!"hi".format!"%10s";             // "hi";
+```
+Justification can be made to work by forcing translation of the translatabole string before feeding it into `format`, like so:
+```d
+tr!"hi".toString.format!"%10s";    // "        hi";
+```
+But since `std.format` is known to be heavy on compile times, it is probably better to use `std.string.rightJustify` instead, with either of these two alternatives:
+```d
+tr!"hi".rightJustify!string(10);   // "        hi";
+tr!"hi".toString.rightJustify(10); // "        hi";
+```
+Note that using `rightJustify` directly without explicit `!string` instantiation will not compile due to the `isSomeString` template requirement of `rightJustify`.
+
 ## Named enums
 
 Members of *named* enums need forced string evaluation, otherwise they resolve to the member identifier name instead:

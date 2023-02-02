@@ -728,3 +728,15 @@ void selectLanguage(string moFile) @safe
 
     currentLanguage = moFile.exists && moFile.isFile ? MoFile(moFile) : MoFile();
 }
+
+unittest
+{
+    import std.format;
+
+    assert(tr!"hi".format!"%10s"           == "hi");  // Unfortunate but true.
+    assert(tr!"hi".toString.format!"%10s"  == "        hi");
+
+    import std.string : rightJustify;
+
+    assert(tr!"hi".rightJustify!string(10) == "        hi");
+}
