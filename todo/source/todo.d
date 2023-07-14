@@ -33,10 +33,17 @@ int main()
         return 1;
     }
     foreach (file; json["files"].arrayNoRef)
-        if (file["role"].str == "source")
+        if (file["role"].str == "source" && file["path"].str.isDSource)
             todo(file["path"].str);
 
     return 0;
+}
+
+bool isDSource(string file)
+{
+    import std.algorithm : endsWith;
+
+    return (file.endsWith(".d") || file.endsWith(".di") || file.endsWith(".dpp"));
 }
 
 void todo(string file)
