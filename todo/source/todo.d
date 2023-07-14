@@ -26,6 +26,12 @@ int main()
             break;
         }
 
+    if (json["files"].arrayNoRef.empty)
+    {
+        std.stdio.stderr.writeln(`Root package `, json["name"], ` does not contain files. Maybe it has "targetType": "none"?`);
+        std.stdio.stderr.writeln;
+        return 1;
+    }
     foreach (file; json["files"].arrayNoRef)
         if (file["role"].str == "source")
             todo(file["path"].str);
