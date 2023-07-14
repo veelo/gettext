@@ -2,18 +2,23 @@ import std.stdio;
 
 int main()
 {
-    import std.process : execute;
+    import std.array : appender, join;
     import std.json;
-    import std.array;
+    import std.process : pipeProcess, Redirect, wait;
+    import std.range : empty;
 
     auto command = ["dub", "describe"];
-    auto dubResult = execute(command);
-    if (dubResult.status != 0)
+    auto dubDescribe = pipeProcess(command, Redirect.stdout);
+    auto a = appender!string;
+    foreach (ubyte[] chunk; dubDescribe.stdout.byChunk(4096))
+        a.put(chunk);
+    if (dubDescribe.pid.wait != 0)
     {
-        writeln("Failed to execute \"", command.join(" "), "\":\n", dubResult.output);
-        return dubResult.status;
+        std.stdio.stderr.writeln("Failed to execute \"", command.join(" "), "\".\n");
+        return dubDescribe.pid.wait;
     }
-    auto json = dubResult.output.parseJSON;
+    auto json = a.data.parseJSON;
+    
     foreach (_package; json["packages"].arrayNoRef)
         if (_package["name"].str == json["rootPackage"].str)
         {
