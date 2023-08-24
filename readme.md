@@ -1,6 +1,6 @@
 ﻿# Gettext
 
-The [GNU `gettext` utilities](https://www.gnu.org/software/gettext/) provide a well established solution for the internationalization of software. It allows users to switch between natural languages without switching executables. Many commercial translation offices can work with GNU `gettext` message catalogs (Portable Object files, PO), and various editors exist that help with the translation process. The translation process and programming process can happen asynchronously and without knowledge of eachother. New translations can be added without recompilation.
+The [GNU `gettext` utilities](https://www.gnu.org/software/gettext/) provide a well established solution for the internationalization of software. It allows users to switch between natural languages without switching executables. Many commercial translation offices can work with GNU `gettext` message catalogs (Portable Object files, PO), and various editors exist that help with the translation process. The translation process and programming process can happen asynchronously and without knowledge of each other. New translations can be added without recompilation.
 
 The use of GNU `gettext` in D has been enabled by the [mofile](https://code.dlang.org/packages/mofile) package, that this Gettext package builds on. If you would only use `mofile` directly then you would depend on the GNU `xgettext` utility for the task of string extraction, hoping it can parse D code as if it were C code. You would also be dealing with a number of limitations that are native to GNU `gettext`.
 
@@ -43,7 +43,7 @@ This Gettext package removes the need for an external parser and provides a more
 - Concise translation markers that can be aliased to your preference.
 - All marked strings that are seen by the compiler are extracted automatically.
 - All (current and future) [D string literal formats](https://dlang.org/spec/lex.html#string_literals) are supported.
-- Static initializers of fields, constants, immutables, manifest constants and anonimous enums can be marked as translatable (a D specialty).
+- Static initializers of fields, constants, immutables, manifest constants and anonymous enums can be marked as translatable (a D specialty).
 - Concatenations of translatable strings, untranslated strings and single chars are supported, even in initializers.
 - Arrays of translatable strings are supported, also when statically initialized.
 - Plural forms are language dependent, and play nice with format strings.
@@ -51,7 +51,7 @@ This Gettext package removes the need for an external parser and provides a more
 - Notes to the translator can be attached to individual translatable strings.
 - Code occurrences of strings are communicated to the translator.
 - Available languages are discovered and selected at run-time.
-- Platfom independent, not linked with C libraries.
+- Platform independent, not linked with C libraries.
 - Automated generation of the PO template.
 - Automated merging into existing translations (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
 - Automated generation of Machine Object files (MO) (requires [GNU `gettext` utilities](https://www.gnu.org/software/gettext/)).
@@ -119,7 +119,7 @@ writeln("This string will remain untranslated.");
 
 ## Plural forms
 
-Sentences that should change in plural form depending on a number should supply both singlular and plural forms with the number like this:
+Sentences that should change in plural form depending on a number should supply both singular and plural forms with the number like this:
 ```d
 // Before:
 writefln("%d green bottle(s) hanging on the wall", n);
@@ -320,7 +320,7 @@ Each natural language that is going to be supported requires a `.po` file, which
 
 There are various tools to do this, from dedicated stand-alone editors, editor plugins or modes, web applications to command line utilities.
 
-Currently my presonal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. Or you let the AI give it its best effort and translate all messages at once, before reviewing the problematic ones (requires subscription). It supports marking translations that need work and adding notes.
+Currently my personal favourite is [Poedit](https://poedit.net/). You open the template, select the target language and start translating with real-time suggestions from various online translation engines. Or you let the AI give it its best effort and translate all messages at once, before reviewing the problematic ones (requires subscription). It supports marking translations that need work and adding notes.
 
 ## Updating translations
 
@@ -379,11 +379,11 @@ Notice how the translation of "apple" in the last translation changes with three
 
 # Impact on footprint and performance
 
-The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instatiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
+The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instantiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
 
 The discovery of translatable strings happens at compile time in the `xgettext` configuration, and the generation of the PO template happens during execution of the result of that compilation. So this at least doubles compile times of your projects. If that is problematic, the `preBuildCommands` and `copyfiles` in `dub.json` can be moved out of the `default` configuration into a `translate` or `release` configuration, so that this cost is not paid during ordinary development.
 
-There is a run time cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big inpact on the evaluations in an event loop. 
+There is a run time cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticeable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big impact on the evaluations in an event loop. 
 
 # Limitations
 
@@ -419,7 +419,7 @@ produces a string of width 10 in which the contents are right justified. However
 ```d
 tr!"hi".format!"%10s";             // "hi";
 ```
-Justification can be made to work by forcing translation of the translatabole string before feeding it into `format`, like so:
+Justification can be made to work by forcing translation of the translatable string before feeding it into `format`, like so:
 ```d
 tr!"hi".toString.format!"%10s";    // "        hi";
 ```
