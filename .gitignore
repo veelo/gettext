@@ -8,8 +8,11 @@ gettext.so
 gettext.dylib
 gettext.dll
 gettext.a
+libgettext.a
 gettext.lib
 gettext-test-*
+gettext_merge
+gettext_po2mo
 *.exe
 *.o
 *.obj
