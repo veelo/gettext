@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-01T11:33:29.2526157Z\n"
+"POT-Creation-Date: 2023-08-25T10:42:21.0415697Z\n"
 "PO-Revision-Date: 2022-07-01 15:18+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -44,6 +44,23 @@ msgstr "Sidney"
 #: source/app.d:114(main) source/app.d:118(main)
 msgid "message"
 msgstr "beskjed"
+
+#. Notice to translator.
+#: source/app.d:122(main)
+#, c-format
+msgctxt "software"
+msgid "One license."
+msgid_plural "%d licenses."
+msgstr[0] "En lisens."
+msgstr[1] "%d lisenser."
+
+#: source/app.d:123(main)
+#, c-format
+msgctxt "driver's"
+msgid "One license."
+msgid_plural "%d licenses."
+msgstr[0] "Ett førerkort."
+msgstr[1] "%d førerkort."
 
 #: source/app.d:17 source/app.d:20 source/app.d:25
 msgid "Red"
@@ -105,13 +122,13 @@ msgstr "tirsdag"
 msgid "One sentence"
 msgstr "En settning"
 
-#: source/app.d:65(main) source/app.d:73(main)
-msgid "One"
-msgstr "En"
-
 #: source/app.d:65(main)
 msgid "sentence"
 msgstr "settning"
+
+#: source/app.d:65(main) source/app.d:73(main)
+msgid "One"
+msgstr "En"
 
 #: source/app.d:7
 msgid "Wednesday"

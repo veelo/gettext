@@ -117,6 +117,11 @@ EOS");
     version (none) funW(tr!"wmessage"w); // No go.
     funW(tr!"message".to!wstring);
 
+    foreach (i; [1, 5])
+    {
+        writeln(tr!("One license.", "%d licenses.", [Tr.context: "software", Tr.note: "Notice to translator."])(i));
+        writeln(tr!("One license.", "%d licenses.", [Tr.context: "driver's"])(i));
+    }
 }
 
 void selectLanguage(string[] args)

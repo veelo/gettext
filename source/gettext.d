@@ -410,10 +410,14 @@ else // Translation mode.
     */
     template tr(string singular, string plural, string[Tr] attributes = null)
     {
-        enum tr = TranslatableStringPlural(singular, plural);
+        enum tr = TranslatableStringPlural(singular, plural, attributes);
     }
 }
+
 import std.format : format, FormatException, FormatSpec;
+
+private enum string SOH = "\x01";
+private enum string EOT = "\x04";
 
 /**
 Represents a translatable string.
@@ -445,13 +449,11 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
 */
 @safe struct TranslatableString
 {
-    private enum string soh = "\x01";
-    private enum string eot = "\x04";
     private immutable(string)[] seq;
     this (string str, string[Tr] attributes = null) nothrow
     {
         if (auto context = Tr.context in attributes)
-            str = soh ~ *context ~ eot ~ str;
+            str = SOH ~ *context ~ EOT ~ str;
         seq = [str];
     }
     this (string[] seq) nothrow
@@ -469,8 +471,8 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
 
         string proxy(string message)
         {
-             if (message.startsWith(soh))
-                return currentLanguage.gettext(message[1 .. $]).findSplitAfter(eot)[1];
+             if (message.startsWith(SOH))
+                return currentLanguage.gettext(message[1 .. $]).findSplitAfter(EOT)[1];
             else
                 return currentLanguage.gettext(message);
         }
@@ -538,20 +540,25 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
             static assert (false, "Need implementation for " ~ LHS.stringof);
     }
 }
+/// idem
 @safe struct TranslatableStringPlural
 {
     string str, strpl;
-    this(string str, string strpl)
+    this(string str, string strpl, string[Tr] attributes = null)
     {
+        if (auto context = Tr.context in attributes)
+            str = SOH ~ *context ~ EOT ~ str;
         this.str = str;
         this.strpl = strpl;
     }
     string opCall(size_t number) const
     {
-        import std.algorithm : max;
+        import std.algorithm : findSplitAfter, max, startsWith;
 
         const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
-        const trans =  currentLanguage.ngettext(str, strpl, n);
+        const trans = (str.startsWith(SOH)) ?
+            currentLanguage.ngettext(str[1 .. $], strpl, n).findSplitAfter(EOT)[1]:
+            currentLanguage.ngettext(str, strpl, n);
         if (countFormatSpecifiers(trans) == countFormatSpecifiers(strpl))
         {
             try

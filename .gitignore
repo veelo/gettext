@@ -23,3 +23,5 @@ gettext_po2mo
 *.pot
 *.mo
 bin/
+merge/gettext_merge.pdb
+po2mo/gettext_po2mo.pdb
