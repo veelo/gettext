@@ -15,8 +15,11 @@
     },
     "configurations": [
         {
-            "name": "default",
-            "preBuildCommands": [
+            "name": "default"
+        },
+        {
+            "name": "i18n",
+            "preGenerateCommands": [
                 "dub run --config=xgettext",
                 "dub run gettext:merge -- --popath=po --backup=none",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"

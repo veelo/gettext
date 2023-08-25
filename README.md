@@ -10,6 +10,7 @@ This Gettext package removes the need for an external parser and provides a more
 - [Features](#features)
 - [Installation](#installation)
     - [Dub configuration](#dub-configuration)
+    - [Module import](#module-import)
     - [`main()` function](#main-function)
     - [Ignore generated files](#ignore-generated-files)
 - [Usage](#usage)
@@ -66,12 +67,15 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
 
 ```json
     "dependencies": {
-        "gettext": "~>1.0"
+        "gettext": "~>1"
     },
     "configurations": [
         {
-            "name": "default",
-            "preBuildCommands": [
+            "name": "default"
+        },
+        {
+            "name": "i18n",
+            "preGenerateCommands": [
                 "dub run --config=xgettext",
                 "dub run gettext:merge -- --popath=po --backup=none",
                 "dub run gettext:po2mo -- --popath=po --mopath=mo"
@@ -91,6 +95,12 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
     ]
 ```
 This may seem quite the boiler plate, but it automates many steps without taking away your control over them. We'll discuss these further below.
+
+## Module import
+
+```d
+import gettext;
+```
 
 ## `main()` function
 
@@ -114,9 +124,16 @@ The PO template and MO files are generated, and need not be kept under version c
 
 Prepend `tr!` in front of every string literal that needs to be translated. For instance:
 ```d
-writeln(tr!"This string is to be translated");
 writeln("This string will remain untranslated.");
+writeln(tr!"This string is to be translated");
 ```
+
+Note that you may rename `tr` to whatever you want:
+```d
+import gettext : _ = tr;
+writeln(_!"This string is to be translated");
+```
+No additional changes to any configurations are needed to make this work.
 
 ## Plural forms
 
@@ -131,12 +148,6 @@ writeln(tr!("one green bottle hanging on the wall",
 Note that the format specifier (`%d`, or `%s`, etc.) is optional in the singular form.
 
 Many languages have not just two forms like the English language does, and translations in those languages can supply all the forms that the particular language requires. This is handled by the translator, and is demonstrated in [the example below](#example-1).
-
-If `tr` is too verbose for you, you can change it to whatever you want:
-```d
-import gettext : _ = tr;
-writeln(_!"No green bottles...");
-```
 
 ## Marking format strings
 
@@ -238,7 +249,17 @@ But, there are places where you wouldn't want to change the type away from `stri
 
 ## Added steps to the build process
 
-With the `preBuildCommands` and `copyFiles` that you've added to your default Dub configuration, a couple of tasks are automated:
+Since the first configuration in your `dub.json` is empty (the `"default"` configuration) nothing special happens when you just do
+```shell
+dub run
+```
+So your normal code - compile - run - test cycle is not slowed down by any additional steps.
+
+But when you do
+```shell
+dub run --config=i18n
+```
+the `preGenerateCommands` and `copyFiles` sections of the `i18n` configuration kick into action, which cause a couple of tasks to be performed:
 1. Translatable strings are extracted from the sources into a PO template.
 1. Translations in any existing PO files are updated according to the new template.
 1. PO files are converted into binary MO files.
@@ -248,9 +269,9 @@ We'll discuss these in a little more detail below.
 
 ### Creating/updating the PO template automatically
 
-In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, we employ D itself to perform this task.
+In other languages, string extraction into a `.pot` file is done by invoking the `xgettext` command line tool from the GNU `gettext` utilities. Because `xgettext` does not know about all the string literal syntaxes in D, and cannot scan any generated code that may be mixed in, we employ D itself to perform this task.
 
-This is how this works: The `dub run --config=xgettext` line in the  `preBuildCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features ([see credits](#credits)) to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is ignored in this configuration. In any other configuration the mixin is actually empty.
+This is how this works: The `dub run --config=xgettext` line in the  `preGenerateCommands` section of your Dub configuration compiles and runs your project into an alternative `targetPath` and executes the code that you have mixed in at the top of your `main()` function. That code makes smart use of D language features ([see credits](#credits)) to collect all strings that are to be translated, together with information from your Dub configuration and the latest Git tag. The rest of your `main()` is not executed in this configuration &mdash; but strings are still extracted. In any other configuration the mixin is actually empty.
 
 By default this creates (or overwrites) the PO template in the `po` folder of your project. This can be changed by using options; To see which options are accepted, run the command with the `--help` option:
 ```shell
@@ -307,7 +328,7 @@ msgstr[1] ""
 
 ### Updating existing translations automatically
 
-The `"dub run gettext:merge -- --popath=po"` pre-build command invokes the `merge` script that is included as a subpackage. This script runs the `msgmerge` utility from GNU `gettext` on the PO files that it finds. When needed, the path to `msgmerge` can be specified with the `--gettextpath` option. Any additional options are passed on to `msgmerge` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html). For example, you can use the `--backup=numbered` option to keep backups of original translations.
+The `"dub run gettext:merge -- --popath=po"` pre-generate command invokes the `merge` script that is included as a subpackage. This script runs the `msgmerge` utility from GNU `gettext` on the PO files that it finds. When needed, the path to `msgmerge` can be specified with the `--gettextpath` option. Any additional options are passed on to `msgmerge` directly, [see its documentation](https://www.gnu.org/software/gettext/manual/html_node/msgmerge-Invocation.html). For example, you can use the `--backup=numbered` option to keep backups of original translations.
 
 Note that if translatable strings were changed in the source, or new ones were added, the PO file is now incomplete. This is detected by the script, which then prints a warning. Changed strings are marked as `#, fuzzy` in the PO file, which can be picked up by editors as needing work. If a lookup in an outdated MO file does not succeed, the application will show the string as it occurs in the source.
 
@@ -329,7 +350,7 @@ Any translations that have fallen behind the template will need to be updated by
 ```shell
 dub run -q gettext:merge -- --popath=po
 ```
-and look for warnings. Warnings will also show if GNU `gettext` detected what it thinks is a mistake. Sadly it sometimes gets it wrong: Weekdays, for example, are capitalized in English but not in many other languages. If a translation string only consists of one word, a weekday, it guesses that it is the start of a sentence and will complain if the translation does not start with a capital letter. Therefore, translatable strings should be full sentences if at all possible.
+Warnings will also show if GNU `gettext` detected what it thinks is a mistake. Sadly it sometimes gets it wrong: Weekdays, for example, are capitalized in English but not in many other languages. If a translation string only consists of one word, a weekday, it guesses that it is the start of a sentence and will complain if the translation does not start with a capital letter. Therefore, translatable strings should be full sentences if at all possible.
 
 PO file editors will typically allow translators to quickly jump between strings that need their attention.
 
@@ -338,7 +359,11 @@ After a PO file has been edited, MO files must be regenerated with this command:
 dub run gettext:po2mo -- --popath=po --mopath=mo
 ```
 
-Currently, Dub does not detect changes in PO files only; Either issue the command by hand or `--force` a recompilation of your project.
+Of course you can also simply rerun
+```shell
+dub run --config=i18n
+```
+once more to execute both above commands in succession.
 
 # Example
 
@@ -382,7 +407,7 @@ Notice how the translation of "apple" in the last translation changes with three
 
 The implementation of Gettext keeps generated code to a minium. Although the `tr` template is instantiated many times with unique parameters, it does not instantiate a new function each time. All that is left of a `tr` instantiation after compilation are the references to the strings that were passed in.
 
-The discovery of translatable strings happens at compile time in the `xgettext` configuration, and the generation of the PO template happens during execution of the result of that compilation. So this at least doubles compile times of your projects. If that is problematic, the `preBuildCommands` and `copyfiles` in `dub.json` can be moved out of the `default` configuration into a `translate` or `release` configuration, so that this cost is not paid during ordinary development.
+The discovery of translatable strings happens at compile time in the `xgettext` configuration, and the generation of the PO template happens during execution of the result of that compilation. This process takes about as much time as a regular compilation of your project.
 
 There is a run time cost to the lookup of strings in the MO file. Currently, [mofile](https://code.dlang.org/packages/mofile) reads the entire file into memory and does a binary search for the untranslated string to find the translated string. In case the cost of this lookup would become noticeable, `mofile` could easily be modified to cache the search with `std.functional.memoize`. Even memoizing a small number of lookups could have a big impact on the evaluations in an event loop. 
 

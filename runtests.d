@@ -31,7 +31,7 @@ int runCommand(string[] command, string workDir = null)
 
 int runTest(string workDir)
 {
-    auto result = runCommand(["dub", "build"], workDir);
+    auto result = runCommand(["dub", "build", "--config=i18n"], workDir);
     if (result != 0)
         return result;
 
