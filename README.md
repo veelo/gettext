@@ -205,6 +205,13 @@ auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
                                                    `of the ship is below the water level.`]);
 ```
 
+They work on plural forms too:
+```d
+writeln(tr!("One license.", "%d licenses.", [Tr.context: "software",
+                                             Tr.note: "Notice to translator."])(n));
+writeln(tr!("One license.", "%d licenses.", [Tr.context: "driver's"])(n));
+```
+
 ## Selecting a translation
 
 Use the following functions to discover translation tables, get the language code for a table and activate a translation:
