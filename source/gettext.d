@@ -37,7 +37,7 @@ foreach (i, where; [tr!"hand", tr!"bush"])
 Again, the specifier with the highest position argument will never be seen by format.
 
 Two identical strings that have different meanings dependent on context may need to be
-translated differently. Dis can be accomplished by disambiguating the string with a
+translated differently. This can be accomplished by disambiguating the string with a
 context argument. It is also possible to attach a comment that will be seen by
 the translator:
 ---
@@ -488,7 +488,7 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
     writeln(E.member);          // "member"
     writeln(E.member.toString); // "translation"
     ---
-    Contrary, anonimous enums and manifest constants do not require this treatment:
+    Contrary, anonymous enums and manifest constants do not require this treatment:
     ---
     enum {member = tr!"translation"}
     writeln(member); // "translation"
