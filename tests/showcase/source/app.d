@@ -122,6 +122,8 @@ EOS");
         writeln(tr!("One license.", "%d licenses.", [Tr.context: "software", Tr.note: "Notice to translator."])(i));
         writeln(tr!("One license.", "%d licenses.", [Tr.context: "driver's"])(i));
     }
+
+    mixin(`writeln(tr!"This is mixed in code.");`);
 }
 
 void selectLanguage(string[] args)

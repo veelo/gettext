@@ -44,6 +44,7 @@ This Gettext package removes the need for an external parser and provides a more
 - All marked strings that are seen by the compiler are extracted automatically.
 - All (current and future) [D string literal formats](https://dlang.org/spec/lex.html#string_literals) are supported.
 - Static initializers of fields, constants, immutables, manifest constants and anonymous enums can be marked as translatable (a D specialty).
+- Translatable strings may be part of generated and mixed in code (another D specialty).
 - Concatenations of translatable strings, untranslated strings and single chars are supported, even in initializers.
 - Arrays of translatable strings are supported, also when statically initialized.
 - Plural forms are language dependent, and play nice with format strings.

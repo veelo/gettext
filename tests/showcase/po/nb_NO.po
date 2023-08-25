@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-25T10:42:21.0415697Z\n"
+"POT-Creation-Date: 2023-08-25T14:53:12.9729565Z\n"
 "PO-Revision-Date: 2022-07-01 15:18+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1\n"
+
+#: source/app.d-mixin-126:126(main)
+msgid "This is mixed in code."
+msgstr "Dette er innblandet kode."
 
 #: source/app.d:10
 msgid "Saturday"
@@ -122,13 +126,13 @@ msgstr "tirsdag"
 msgid "One sentence"
 msgstr "En settning"
 
-#: source/app.d:65(main)
-msgid "sentence"
-msgstr "settning"
-
 #: source/app.d:65(main) source/app.d:73(main)
 msgid "One"
 msgstr "En"
+
+#: source/app.d:65(main)
+msgid "sentence"
+msgstr "settning"
 
 #: source/app.d:7
 msgid "Wednesday"
