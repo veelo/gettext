@@ -184,7 +184,7 @@ Optionally, two kinds of attributes can be passed to `tr`, in the form of an ass
 
 Sometimes a sentence can be interpreted to mean different things, and then it is important to be able to clarify things for the translator. Here is an example of how to do this:
 ```d
-auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
+auto name = tr!("Walter Bright", Comment("Proper name. Phonetically: ˈwɔltər braɪt"));
 ```
 
 The GNU `gettext` manual has a section [about the translation of proper names](https://www.gnu.org/software/gettext/manual/html_node/Names.html).
@@ -193,23 +193,23 @@ The GNU `gettext` manual has a section [about the translation of proper names](h
 
 Multiple occurrences of the same sentence are combined into one translation by default. In some cases, that may not work well. Some language, for example, may need to translate identical menu items in different menus differently. These can be disambiguated by adding a context like so:
 ```d
-auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File"]);
-auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer"]);
+auto labelOpenFile    = tr!("Open", Context("Menu|File"));
+auto labelOpenPrinter = tr!("Open", Context("Menu|File|Printer"));
 ```
 
-Notes and comments can be combined in any order:
+Notes and comments can be combined:
 ```d
-auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
-auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
-                                          Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
-                                                   `of the ship is below the water level.`]);
+auto message1 = tr!("Review the draft.", Context("document"));
+auto message2 = tr!("Review the draft.", Context("nautical"),
+                                         Comment(`Nautical term! "Draft" = how deep the bottom` ~
+                                                 `of the ship is below the water level.`));
 ```
 
 They work on plural forms too:
 ```d
-writeln(tr!("One license.", "%d licenses.", [Tr.context: "software",
-                                             Tr.note: "Notice to translator."])(n));
-writeln(tr!("One license.", "%d licenses.", [Tr.context: "driver's"])(n));
+writeln(tr!("One license.", "%d licenses.", Context("software"),
+                                            Comment("Notice to translator."))(n));
+writeln(tr!("One license.", "%d licenses.", Context("driver's"))(n));
 ```
 
 ## Selecting a translation

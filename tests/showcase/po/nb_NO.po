@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-08-26T14:35:03.4467743Z\n"
+"POT-Creation-Date: 2023-08-27T10:52:19.7000605Z\n"
 "PO-Revision-Date: 2022-07-01 15:18+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.1\n"
 
-#: source/app.d-mixin-130:130(main)
+#: source/app.d-mixin-136:136(main)
 msgid "This is mixed in code."
 msgstr "Dette er innblandet kode."
 
@@ -26,38 +26,43 @@ msgstr "Dette er innblandet kode."
 msgid "Saturday"
 msgstr "lørdag"
 
-#: source/app.d:100(main.report)
+#: source/app.d:100(main)
+#, c-format
+msgid "Format the %s"
+msgstr "Formatter %sen"
+
+#: source/app.d:106(main.report)
 #, c-format
 msgid "Last %s, in %s, I ate a muffin."
 msgid_plural "Last %s, in %s, I ate %d muffins."
 msgstr[0] "Siste %s, i %s, spiste jeg en muffins."
 msgstr[1] "Siste %s, i %s, spiste jeg %d muffins."
 
-#: source/app.d:104(main.report)
+#: source/app.d:11
+msgid "Sunday"
+msgstr "søndag"
+
+#: source/app.d:110(main.report)
 #, c-format
 msgid "I ate a muffin in %1$s on %2$s."
 msgid_plural "I ate %3$d muffins in %1$s on %2$s."
 msgstr[0] "Jeg spiste en muffins i %1$s på %2$s."
 msgstr[1] "Jeg spiste %3$d muffins i %1$s på %2$s."
 
-#: source/app.d:11
-msgid "Sunday"
-msgstr "søndag"
-
-#: source/app.d:112(main)
+#: source/app.d:118(main)
 msgid "Copenhagen"
 msgstr "København"
 
-#: source/app.d:114(main)
+#: source/app.d:120(main)
 msgid "Sidney"
 msgstr "Sidney"
 
-#: source/app.d:118(main) source/app.d:122(main)
+#: source/app.d:124(main) source/app.d:128(main)
 msgid "message"
 msgstr "beskjed"
 
 #. Notice to translator.
-#: source/app.d:126(main)
+#: source/app.d:132(main)
 #, c-format
 msgctxt "software"
 msgid "One license."
@@ -65,7 +70,7 @@ msgid_plural "%d licenses."
 msgstr[0] "En lisens."
 msgstr[1] "%d lisenser."
 
-#: source/app.d:127(main)
+#: source/app.d:133(main)
 #, c-format
 msgctxt "driver's"
 msgid "One license."
@@ -162,27 +167,27 @@ msgid "Thursday"
 msgstr "torsdag"
 
 #. Proper name. Phonetically: ˈwɔltər braɪt
-#: source/app.d:80(main)
+#: source/app.d:80(main) source/app.d:81(main)
 msgid "Walter Bright"
 msgstr "Walter Bright"
 
-#: source/app.d:83(main)
+#: source/app.d:84(main)
 msgctxt "Menu|File|Open"
 msgid "Open"
 msgstr "Åpne"
 
-#: source/app.d:84(main)
+#: source/app.d:85(main)
 msgctxt "Menu|File|Printer|Open"
 msgid "Open"
 msgstr "Åpne"
 
-#: source/app.d:86(main)
+#: source/app.d:87(main) source/app.d:92(main)
 msgctxt "document"
 msgid "Review the draft."
 msgstr "Gjennomgå utkastet."
 
 #. Nautical term! "Draft" = how deep the bottom of the ship is below the water level.
-#: source/app.d:87(main)
+#: source/app.d:88(main) source/app.d:93(main)
 msgctxt "nautical"
 msgid "Review the draft."
 msgstr "Kontroller dypgangen."
@@ -190,8 +195,3 @@ msgstr "Kontroller dypgangen."
 #: source/app.d:9
 msgid "Friday"
 msgstr "fredag"
-
-#: source/app.d:94(main)
-#, c-format
-msgid "Format the %s"
-msgstr "Formatter %sen"

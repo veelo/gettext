@@ -41,10 +41,10 @@ translated differently. This can be accomplished by disambiguating the string wi
 context argument. It is also possible to attach a comment that will be seen by
 the translator:
 ---
-auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
-auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
-                                          Tr.note: `Nautical term! "Draft" = how deep the bottom` ~
-                                                   `of the ship is below the water level.`]);
+auto message1 = tr!("Review the draft.", Context("document"));
+auto message2 = tr!("Review the draft.", Context("nautical"),
+                                         Comment(`Nautical term! "Draft" = how deep the bottom` ~
+                                                 `of the ship is below the water level.`));
 ---
 
 If you'd rather use an underscore to mark translatable strings,
@@ -65,10 +65,30 @@ $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
 
 module gettext;
 
-/// Optional attribute categories.
-enum Tr {
-    note,   /// Pass a note to the translator.
-    context /// Disambiguate by giving a context.
+/** $(NEVER_DOCUMENT) */ // Obsolete API
+enum Tr {note, context}
+private Context theContext(string[Tr] attributes)
+{
+    if (auto c = Tr.context in attributes)
+        return Context(*c);
+    return Context(null);
+}
+private Comment theComment(string[Tr] attributes)
+{
+    if (auto n = Tr.note in attributes)
+        return Comment(*n);
+    return Comment(null);
+}
+
+/// A comment passed to the translator.
+struct Comment
+{
+    private string comment = null;
+}
+/// A Context is used to disambiguate identical strings with different meanings.
+struct Context
+{
+    private string context = null;
 }
 
 version (xgettext) // String extraction mode.
@@ -300,7 +320,7 @@ version (xgettext) // String extraction mode.
         return message;
     }
 
-    /** $(NEVER_DOCUMENT) */
+    /** $(NEVER_DOCUMENT) */ // Obsolete API
     template tr(string singular, string[Tr] attributes = null,
                 int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
     {
@@ -308,8 +328,40 @@ version (xgettext) // String extraction mode.
                        line, file, mod, func);
     }
 
-    /** $(NEVER_DOCUMENT) */
+    /** $(NEVER_DOCUMENT) */ // Obsolete API
     template tr(string singular, string plural, string[Tr] attributes = null,
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
+    {
+        alias tr = tr!(singular, plural, theContext(attributes), theComment(attributes),
+                       line, file, mod, func);
+    }
+
+    /** $(NEVER_DOCUMENT) */
+    template tr(string singular, Comment comment = Comment(null),
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
+    {
+        alias tr = tr!(singular, null, Context(null), comment,
+                       line, file, mod, func);
+    }
+
+    /** $(NEVER_DOCUMENT) */
+    template tr(string singular, Context context, Comment comment = Comment(null),
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
+    {
+        alias tr = tr!(singular, null, context, comment,
+                       line, file, mod, func);
+    }
+
+    /** $(NEVER_DOCUMENT) */
+    template tr(string singular, string plural, Comment comment = Comment(null),
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
+    {
+        alias tr = tr!(singular, plural, Context(null), comment,
+                       line, file, mod, func);
+    }
+
+    /** $(NEVER_DOCUMENT) */
+    template tr(string singular, string plural, Context context, Comment comment = Comment(null),
                 int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
     {
         static struct StrInjector
@@ -335,15 +387,15 @@ version (xgettext) // String extraction mode.
                     else
                         return Format.plain;
                 }
-                string context()
+                translatableStrings.require(Key(singular, plural, format, context.context)) ~= reference;
+                if (comment.comment !is null)
                 {
-                    if (auto c = Tr.context in attributes)
-                        return *c;
-                    return null;
+                    import std.algorithm : canFind;
+
+                    const key = Key(singular, plural, format, context.context);
+                    if (!comments.require(key).canFind(comment.comment))
+                        comments[key] ~= comment.comment;
                 }
-                translatableStrings.require(Key(singular, plural, format, context)) ~= reference;
-                if (auto c = Tr.note in attributes)
-                   comments.require(Key(singular, plural, format, context)) ~= *c;
             }
         }
         static if (plural == null)
@@ -374,9 +426,6 @@ else // Translation mode.
     /**
     Translate `message`.
 
-    This does *not* instantiate a new function for every marked string
-    (the signature is fabricated for the sake of documentation).
-
     Returns: The translation of `message` if one exists in the selected
     language, or `message` otherwise.
     See_Also: [selectLanguage]
@@ -384,17 +433,27 @@ else // Translation mode.
     Examples:
     ---
     writeln(tr!"Translatable message");
+    writeln(tr!"Translatable message", Comment("A note to the translator"));
+    writeln(tr!"Translatable message", Context("A different context"));
+    writeln(tr!"Translatable message", Context("A different context"), Comment("Translate this differently"));
     ---
     */
-    template tr(string singular, string[Tr] attributes = null)
+    template tr(string message, Comment comment = Comment(null))
     {
-        enum tr = TranslatableString(singular, attributes);
+         enum tr = TranslatableString(message);
+    }
+    /// idem
+    template tr(string message, Context context, Comment comment = Comment(null))
+    {
+         enum tr = TranslatableString(message, context);
+    }
+    /** $(NEVER_DOCUMENT) */ // Obsolete API
+    template tr(string message, string[Tr] attributes = null)
+    {
+        enum tr = TranslatableString(message, theContext(attributes));
     }
     /**
     Translate a message in the correct plural form.
-
-    This does *not* instantiate a new function for every marked string
-    (the signature is fabricated for the sake of documentation).
 
     The first argument should be in singular form, the second in plural
     form. Note that the format specifier `%d` is optional.
@@ -406,11 +465,24 @@ else // Translation mode.
     Examples:
     ---
     writeln(tr!("There is a goose!", "There are %d geese!")(n));
+    writeln(tr!("There is a goose!", "There are %d geese!", Comment("A note to the translator"))(n));
+    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"))(n));
+    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"), Comment("Translate this differently"))(n));
     ---
     */
+    template tr(string singular, string plural, Comment comment = Comment(null))
+    {
+         enum tr = TranslatableStringPlural(singular, plural);
+    }
+    /// idem
+    template tr(string singular, string plural, Context context, Comment comment = Comment(null))
+    {
+         enum tr = TranslatableStringPlural(singular, plural, context);
+    }
+    /** $(NEVER_DOCUMENT) */ // Obsolete API
     template tr(string singular, string plural, string[Tr] attributes = null)
     {
-        enum tr = TranslatableStringPlural(singular, plural, attributes);
+        enum tr = TranslatableStringPlural(singular, plural, theContext(attributes));
     }
 }
 
@@ -450,11 +522,13 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
 @safe struct TranslatableString
 {
     private immutable(string)[] seq;
-    this (string str, string[Tr] attributes = null) nothrow
+    this (string str)
     {
-        if (auto context = Tr.context in attributes)
-            str = SOH ~ *context ~ EOT ~ str;
         seq = [str];
+    }
+    this (string str, Context context)
+    {
+        seq = context.context is null ? [str] : [SOH ~ context.context ~ EOT ~ str];
     }
     this (string[] seq) nothrow
     {
@@ -544,11 +618,14 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
 @safe struct TranslatableStringPlural
 {
     string str, strpl;
-    this(string str, string strpl, string[Tr] attributes = null)
+    this (string str, string strpl)
     {
-        if (auto context = Tr.context in attributes)
-            str = SOH ~ *context ~ EOT ~ str;
         this.str = str;
+        this.strpl = strpl;
+    }
+    this (string str, string strpl, Context context)
+    {
+        this.str = context.context is null ? str : SOH ~ context.context ~ EOT ~ str;
         this.strpl = strpl;
     }
     string opCall(size_t number) const

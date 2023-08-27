@@ -77,14 +77,20 @@ EOS");
     writeln(running);
 
     // Pass a note to the translator.
-    auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
+    auto name0 = tr!("Walter Bright", Comment("Proper name. Phonetically: ˈwɔltər braɪt"));
+    auto name1 = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]); // Obsolete API
 
     // Disambiguate identical sentenses.
-    auto labelOpenFile    = tr!("Open", [Tr.context: "Menu|File|Open"]);
-    auto labelOpenPrinter = tr!("Open", [Tr.context: "Menu|File|Printer|Open"]);
+    auto labelOpenFile    = tr!("Open", Context("Menu|File|Open"));
+    auto labelOpenPrinter = tr!("Open", Context("Menu|File|Printer|Open"));
 
-    auto message1 = tr!("Review the draft.", [Tr.context: "document"]);
-    auto message2 = tr!("Review the draft.", [Tr.context: "nautical",
+    auto message1 = tr!("Review the draft.", Context("document"));
+    auto message2 = tr!("Review the draft.", Context("nautical"),
+                                             Comment(`Nautical term! "Draft" = how deep the bottom ` ~
+                                                       `of the ship is below the water level.`));
+    // Obsolete API:
+    auto message3 = tr!("Review the draft.", [Tr.context: "document"]);
+    auto message4 = tr!("Review the draft.", [Tr.context: "nautical",
                                               Tr.note: `Nautical term! "Draft" = how deep the bottom ` ~
                                                        `of the ship is below the water level.`]);
     writeln(message1);
@@ -123,8 +129,8 @@ EOS");
 
     foreach (i; [1, 5])
     {
-        writeln(tr!("One license.", "%d licenses.", [Tr.context: "software", Tr.note: "Notice to translator."])(i));
-        writeln(tr!("One license.", "%d licenses.", [Tr.context: "driver's"])(i));
+        writeln(tr!("One license.", "%d licenses.", Context("software"), Comment("Notice to translator."))(i));
+        writeln(tr!("One license.", "%d licenses.", Context("driver's"))(i));
     }
 
     mixin(`writeln(tr!"This is mixed in code.");`);
