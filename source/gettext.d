@@ -302,15 +302,15 @@ version (xgettext) // String extraction mode.
 
     /** $(NEVER_DOCUMENT) */
     template tr(string singular, string[Tr] attributes = null,
-                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
     {
         alias tr = tr!(singular, null, attributes,
-                       line, file, mod, func, Args);
+                       line, file, mod, func);
     }
 
     /** $(NEVER_DOCUMENT) */
     template tr(string singular, string plural, string[Tr] attributes = null,
-                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__, Args...)
+                int line = __LINE__, string file = __FILE_FULL_PATH__, string mod = __MODULE__, string func = __FUNCTION__)
     {
         static struct StrInjector
         {
@@ -330,7 +330,7 @@ version (xgettext) // String extraction mode.
                 }
                 Format format()
                 {
-                    static if (Args.length > 0 || singular.hasFormatSpecifiers || (plural && plural.hasFormatSpecifiers))
+                    static if (singular.hasFormatSpecifiers || (plural && plural.hasFormatSpecifiers))
                         return Format.c;
                     else
                         return Format.plain;
