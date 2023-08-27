@@ -72,6 +72,10 @@ EOS");
 
     immutable onez = tr!"One" ~ '\0';
 
+    string file = args[0]; // A runtime variable.
+    auto running = tr!"Currently executing " ~ file ~ tr!". Does it work?";
+    writeln(running);
+
     // Pass a note to the translator.
     auto name = tr!("Walter Bright", [Tr.note: "Proper name. Phonetically: ˈwɔltər braɪt"]);
 
