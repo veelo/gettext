@@ -63,7 +63,11 @@ This Gettext package removes the need for an external parser and provides a more
 
 ## Dub configuration
 
-Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`):
+Add the following to your `dub.json`:
+
+<details open>
+
+<summary>dub.json</summary>
 
 ```json
     "dependencies": {
@@ -94,6 +98,39 @@ Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`
         }
     ]
 ```
+
+</details>
+
+or its equvialent `dub.sdl`:
+
+<details>
+
+<summary>dub.sdl</summary>
+
+```sdl
+dependency "gettext" version="~>1"
+configuration "default" {
+    targetType "library"
+}
+configuration "i18n" {
+    targetType "library"
+    copyFiles "mo"
+    preGenerateCommands \
+        "dub run --config=xgettext" \
+        "dub run gettext:merge -- --popath=po --backup=none" \
+        "dub run gettext:po2mo -- --popath=po --mopath=mo"
+}
+
+configuration "xgettext" {
+    targetType "library"
+    targetPath ".xgettext"
+    subConfiguration "gettext" "xgettext"
+    versions "xgettext"
+}
+```
+
+</details>
+
 This may seem quite the boiler plate, but it automates many steps without taking away your control over them. We'll discuss these further below.
 
 ## Module import
