@@ -66,6 +66,7 @@ This Gettext package removes the need for an external parser and provides a more
 Add the following to your `dub.json` (or its SDLang equivalent to your `dub.sdl`):
 
 ```json
+    "targetType": "executable",
     "dependencies": {
         "gettext": "~>1"
     },
