@@ -409,9 +409,11 @@ version (xgettext) // String extraction mode.
         import std.format : FormatSpec;
         import std.exception : ifThrown;
 
-        static void ns(const(char)[] arr) {} // the simplest output range
+        static void ns(const(char)[]) {} // the simplest output range
         auto nullSink = &ns;
-        return FormatSpec!char(fmt).writeUpToNextSpec(nullSink).ifThrown!FormatException(false);
+        // Only catching FormatException is not enough. Checking "0%." causes an array bounds violation
+        // in std\format\spec.d(461,29), so we need to catch all errors; which is not @safe in general.
+        return (() @trusted => FormatSpec!char(fmt).writeUpToNextSpec(nullSink).ifThrown!Throwable(false))();
     }
     unittest 
     {
@@ -419,6 +421,7 @@ version (xgettext) // String extraction mode.
         assert ("On %%2$s I eat %%3$s and walk for %1$d hours.".hasFormatSpecifiers);
         assert (!"On %%2$s I eat %%3$s and walk for hours.".hasFormatSpecifiers);
         assert (!"98%".hasFormatSpecifiers);
+        assert (!"0%.".hasFormatSpecifiers);
     }
 }
 else // Translation mode.
