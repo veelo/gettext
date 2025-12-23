@@ -122,6 +122,7 @@ version (xgettext) // String extraction mode.
     import std.typecons : Tuple;
     import std.array : join;
     import std.ascii : newline;
+    import std.algorithm.searching;
 
     private enum Format {plain, c}
     private alias Key = Tuple!(string, "singular",
@@ -411,9 +412,14 @@ version (xgettext) // String extraction mode.
 
         static void ns(const(char)[]) {} // the simplest output range
         auto nullSink = &ns;
-        // Only catching FormatException is not enough. Checking "0%." causes an array bounds violation
-        // in std\format\spec.d(461,29), so we need to catch all errors; which is not @safe in general.
-        return (() @trusted => FormatSpec!char(fmt).writeUpToNextSpec(nullSink).ifThrown!Throwable(false))();
+        //// Work around https://github.com/dlang/phobos/issues/10916
+        if (fmt.endsWith("%."))
+            fmt = fmt[0..$-2];
+        else
+            if (fmt.endsWith("%.*"))
+                fmt = fmt[0..$-3];
+        ////
+        return FormatSpec!char(fmt).writeUpToNextSpec(nullSink).ifThrown!FormatException(false);
     }
     unittest 
     {
@@ -422,6 +428,7 @@ version (xgettext) // String extraction mode.
         assert (!"On %%2$s I eat %%3$s and walk for hours.".hasFormatSpecifiers);
         assert (!"98%".hasFormatSpecifiers);
         assert (!"0%.".hasFormatSpecifiers);
+        static assert (!"0%.".hasFormatSpecifiers);
     }
 }
 else // Translation mode.
