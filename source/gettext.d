@@ -632,7 +632,7 @@ a separate function for every string. https://forum.dlang.org/post/t8pqvg$20r0$1
     {
         import std.algorithm : findSplitAfter, max, startsWith;
 
-        const n = cast (int) (number > int.max ? (number % 1000000) + 1000000 : number);
+        const n = cast (int) (number > int.max ? (number % 1_000_000) + 1_000_000 : number);
         const trans = (str.startsWith(SOH)) ?
             currentLanguage.ngettext(str[1 .. $], strpl, n).findSplitAfter(EOT)[1]:
             currentLanguage.ngettext(str, strpl, n);
@@ -674,43 +674,40 @@ private immutable(Char)[] disableAllButLastSpecifier(Char)(const Char[] inp) @sa
     import std.exception : enforce;
     import std.typecons : tuple;
 
-    enum Mode {undefined, inSequence, outOfSequence}
+    enum Mode {undefined, withoutPosition, withPosition}
     Mode mode = Mode.undefined;
 
     Appender!(Char[]) outp;
     outp.reserve(inp.length + 10);
     // Traverse specs, disable all of them, note where the highest index is. Re-enable that one.
-    size_t lastSpecIndex = 0, highestSpecIndex = 0, highestSpecPos = 0, specs = 0;
+    size_t highestSpecIndex = 0, highestSpecPos = 0, specs = 0;
     auto f = FormatSpec!Char(inp);
-    while (f.trailing.length > 0)
+    while (f.writeUpToNextSpec(outp))
     {
-        if (f.writeUpToNextSpec(outp))
-        {
-            // Mode check.
-            if (mode == Mode.undefined)
-                mode = f.indexStart > 0 ? Mode.outOfSequence : Mode.inSequence;
-            else
-                enforce!FormatException( mode == Mode.inSequence && f.indexStart == 0 ||
-                                        (mode == Mode.outOfSequence && f.indexStart != lastSpecIndex),
-                        `Cannot mix specifiers with and without a position argument in "` ~ inp ~ `"`);
-            // Track the highest.
-            if (f.indexStart == 0)
+        // Mode check.
+        if (mode == Mode.undefined)
+            // The first spec determines whether all specs have position arguments or none of then do.
+            mode = f.indexStart > 0 ? Mode.withPosition : Mode.withoutPosition;
+        else
+            // Enforce the above condition.
+            enforce!FormatException((mode == Mode.withoutPosition && f.indexStart == 0) ||
+                                    (mode == Mode.withPosition && f.indexStart != 0),
+                    `Cannot mix specifiers with and without a position argument in "` ~ inp ~ `"`);
+        // Track the highest.
+        if (f.indexStart == 0)
+            highestSpecPos = outp[].length + 1;
+        else
+            if (f.indexStart > highestSpecIndex)
+            {
+                highestSpecIndex = f.indexStart;
                 highestSpecPos = outp[].length + 1;
-            else
-                if (f.indexStart > highestSpecIndex)
-                {
-                    highestSpecIndex = f.indexStart;
-                    highestSpecPos = outp[].length + 1;
-                }
-            // disable
-            auto curFmtSpec = inp[outp[].length - specs .. $ - f.trailing.length];
-            outp ~= '%'.to!Char ~ curFmtSpec;
-            lastSpecIndex = f.indexStart;
-            specs++;
-        }
-
+            }
+        // disable
+        auto curFmtSpec = inp[outp[].length - specs .. $ - f.trailing.length];
+        outp ~= '%'.to!Char ~ curFmtSpec;
+        specs++;
     }
-    return mode == Mode.inSequence ?
+    return mode == Mode.withoutPosition ?
         (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + 1 .. $]).idup :
         (outp[][0 .. highestSpecPos] ~ outp[][highestSpecPos + highestSpecIndex.to!string.length + 2 .. $]).idup;
 }
