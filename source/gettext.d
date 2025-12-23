@@ -426,6 +426,8 @@ else // Translation mode.
     /**
     Translate `message`.
 
+    An optional comment will be seen by the translator.
+
     Returns: The translation of `message` if one exists in the selected
     language, or `message` otherwise.
     See_Also: [selectLanguage]
@@ -434,18 +436,33 @@ else // Translation mode.
     ---
     writeln(tr!"Translatable message");
     writeln(tr!"Translatable message", Comment("A note to the translator"));
-    writeln(tr!"Translatable message", Context("A different context"));
-    writeln(tr!"Translatable message", Context("A different context"), Comment("Translate this differently"));
     ---
     */
     template tr(string message, Comment comment = Comment(null))
     {
-         enum tr = TranslatableString(message);
+         enum tr = TranslatableString(message); /// $(NEVER_DOCUMENT)
     }
-    /// idem
+    /**
+    Translate `message`.
+
+    The supplied context allows messages of the same source string but
+    differing context to be translated differently.
+
+    An optional comment will be seen by the translator.
+
+    Returns: The translation of `message` if one exists in the selected
+    language, or `message` otherwise.
+    See_Also: [selectLanguage]
+
+    Examples:
+    ---
+    writeln(tr!"Translatable message", Context("A different context"));
+    writeln(tr!"Translatable message", Context("A different context"), Comment("Translate this differently"));
+    ---
+    */
     template tr(string message, Context context, Comment comment = Comment(null))
     {
-         enum tr = TranslatableString(message, context);
+         enum tr = TranslatableString(message, context); /// $(NEVER_DOCUMENT)
     }
     /** $(NEVER_DOCUMENT) */ // Obsolete API
     template tr(string message, string[Tr] attributes = null)
@@ -458,26 +475,46 @@ else // Translation mode.
     The first argument should be in singular form, the second in plural
     form. Note that the format specifier `%d` is optional.
 
+    An optional comment will be seen by the translator.
+
     Returns: The translation if one exists in the selected
-    language, or the corresponding original otherwise.
+    language, or the corresponding original otherwise, depending on n.
     See_Also: [selectLanguage]
 
     Examples:
     ---
     writeln(tr!("There is a goose!", "There are %d geese!")(n));
     writeln(tr!("There is a goose!", "There are %d geese!", Comment("A note to the translator"))(n));
-    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"))(n));
-    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"), Comment("Translate this differently"))(n));
     ---
     */
     template tr(string singular, string plural, Comment comment = Comment(null))
     {
-         enum tr = TranslatableStringPlural(singular, plural);
+         enum tr = TranslatableStringPlural(singular, plural); /// $(NEVER_DOCUMENT)
     }
-    /// idem
+    /**
+    Translate a message in the correct plural form.
+
+    The first argument should be in singular form, the second in plural
+    form. Note that the format specifier `%d` is optional.
+
+    The supplied context allows messages of the same source strings but
+    differing context to be translated differently.
+
+    An optional comment will be seen by the translator.
+
+    Returns: The translation if one exists in the selected
+    language, or the corresponding original otherwise, depending on n.
+    See_Also: [selectLanguage]
+
+    Examples:
+    ---
+    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"))(n));
+    writeln(tr!("There is a goose!", "There are %d geese!", Context("A different context"), Comment("Translate this differently"))(n));
+    ---
+    */
     template tr(string singular, string plural, Context context, Comment comment = Comment(null))
     {
-         enum tr = TranslatableStringPlural(singular, plural, context);
+         enum tr = TranslatableStringPlural(singular, plural, context); /// $(NEVER_DOCUMENT)
     }
     /** $(NEVER_DOCUMENT) */ // Obsolete API
     template tr(string singular, string plural, string[Tr] attributes = null)
